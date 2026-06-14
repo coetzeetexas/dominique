@@ -128,13 +128,14 @@ const Navigation = () => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          <a href="#" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 bg-gradient-to-br from-navy-900 to-navy-700 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform">
-              <span className="text-white font-bold text-xl">K</span>
+          <a href="#" className="flex items-center group">
+            <div className={`rounded-lg overflow-hidden transition-all duration-300 group-hover:scale-105 ${isScrolled ? 'bg-white' : 'bg-white/95 shadow-md'}`}>
+              <img
+                src="/WhatsApp_Image_2026-06-13_at_16.25.30.jpeg"
+                alt="KORIX LLC"
+                className="h-12 w-auto object-contain px-2 py-1"
+              />
             </div>
-            <span className={`font-bold text-xl ${isScrolled ? 'text-navy-900' : 'text-white'}`}>
-              KORIX LLC
-            </span>
           </a>
 
           {/* Desktop Navigation */}
@@ -1142,11 +1143,14 @@ const Footer = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-white/20 to-white/10 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">K</span>
+            <div className="mb-4">
+              <div className="inline-block bg-white rounded-lg overflow-hidden">
+                <img
+                  src="/WhatsApp_Image_2026-06-13_at_16.25.30.jpeg"
+                  alt="KORIX LLC"
+                  className="h-14 w-auto object-contain px-3 py-2"
+                />
               </div>
-              <span className="font-bold text-xl">KORIX LLC</span>
             </div>
             <p className="text-2xl font-bold text-white/90 mb-4">
               Focus <span className="text-accent-500">o</span> Execute <span className="text-accent-500">o</span> Win

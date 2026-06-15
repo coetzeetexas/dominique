@@ -3,8 +3,6 @@ import { TermsPage, PrivacyPage, CookiePage } from './LegalPages';
 import { ClaudeCoursesPage } from './ClaudeCoursesPage';
 import { TrainingApplicationPage } from './TrainingApplicationPage';
 import { AdminDashboard } from './AdminDashboard';
-
-type Page = 'home' | 'terms' | 'privacy' | 'cookies' | 'courses' | 'training' | 'admin';
 import {
   Brain,
   Users,
@@ -50,6 +48,8 @@ import {
   UsersRound,
   PieChart,
 } from 'lucide-react';
+
+type Page = 'home' | 'terms' | 'privacy' | 'cookies' | 'courses' | 'training' | 'admin';
 
 // Animation Hook for intersection observer
 const useInView = (threshold = 0.1) => {

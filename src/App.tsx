@@ -2,8 +2,9 @@ import { useState, useEffect, useRef, FormEvent } from 'react';
 import { TermsPage, PrivacyPage, CookiePage } from './LegalPages';
 import { ClaudeCoursesPage } from './ClaudeCoursesPage';
 import { TrainingApplicationPage } from './TrainingApplicationPage';
+import { AdminDashboard } from './AdminDashboard';
 
-type Page = 'home' | 'terms' | 'privacy' | 'cookies' | 'courses' | 'training';
+type Page = 'home' | 'terms' | 'privacy' | 'cookies' | 'courses' | 'training' | 'admin';
 import {
   Brain,
   Users,
@@ -1281,6 +1282,9 @@ const Footer = ({ onNavigate }: { onNavigate: (page: Page) => void }) => {
             <button onClick={() => onNavigate('cookies')} className="text-white/60 hover:text-white transition-colors">
               Cookie Policy
             </button>
+            <button onClick={() => onNavigate('admin')} className="text-white/20 hover:text-white/50 transition-colors text-xs">
+              Admin
+            </button>
           </div>
           </div>
         </div>
@@ -1302,6 +1306,7 @@ export default function App() {
   if (page === 'cookies') return <CookiePage onBack={() => navigate('home')} />;
   if (page === 'courses') return <ClaudeCoursesPage onBack={() => navigate('home')} />;
   if (page === 'training') return <TrainingApplicationPage onBack={() => navigate('home')} />;
+  if (page === 'admin') return <AdminDashboard onBack={() => navigate('home')} />;
 
   return (
     <div className="min-h-screen bg-white font-sans antialiased">

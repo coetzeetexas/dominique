@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, FormEvent } from 'react';
 import { TermsPage, PrivacyPage, CookiePage } from './LegalPages';
 import { ClaudeCoursesPage } from './ClaudeCoursesPage';
+import { TrainingApplicationPage } from './TrainingApplicationPage';
 
-type Page = 'home' | 'terms' | 'privacy' | 'cookies' | 'courses';
+type Page = 'home' | 'terms' | 'privacy' | 'cookies' | 'courses' | 'training';
 import {
   Brain,
   Users,
@@ -403,7 +404,7 @@ const StatCard = ({ stat, index, isInView }: { stat: { value: number; suffix: st
 };
 
 // Services Section
-const ServicesSection = ({ onNavigateToCourses }: { onNavigateToCourses: () => void }) => {
+const ServicesSection = ({ onNavigateToCourses, onNavigateToTraining }: { onNavigateToCourses: () => void; onNavigateToTraining: () => void }) => {
   const { ref, isInView } = useInView(0.1);
 
   const services = [
@@ -531,12 +532,31 @@ const ServicesSection = ({ onNavigateToCourses }: { onNavigateToCourses: () => v
             </div>
           ))}
         </div>
+
+        {/* Training Application Banner */}
+        <div className="mt-16 mx-auto max-w-4xl px-4">
+          <div className="rounded-2xl bg-gradient-to-r from-navy-900 to-navy-700 p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <GraduationCap className="w-5 h-5 text-accent-400" />
+                <span className="text-xs font-bold text-accent-400 uppercase tracking-widest">Free Workforce Training</span>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-1">Are You Currently Unemployed?</h3>
+              <p className="text-white/60 text-sm max-w-md">Apply for KORIX LLC's free training program. We help unemployed individuals build AI and digital skills for today's job market.</p>
+            </div>
+            <button
+              onClick={onNavigateToTraining}
+              className="flex-shrink-0 flex items-center gap-2 px-6 py-3 bg-accent-500 hover:bg-accent-600 text-white font-semibold rounded-xl transition-all hover:shadow-lg hover:-translate-y-0.5 text-sm whitespace-nowrap"
+            >
+              Apply Now
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       </div>
     </section>
   );
 };
-
-// Industries Section
 const IndustriesSection = () => {
   const { ref, isInView } = useInView(0.2);
 
@@ -1210,6 +1230,14 @@ const Footer = ({ onNavigate }: { onNavigate: (page: Page) => void }) => {
                   Claude Courses
                 </button>
               </li>
+              <li>
+                <button
+                  onClick={() => onNavigate('training')}
+                  className="text-white/60 hover:text-white transition-colors"
+                >
+                  Training Application
+                </button>
+              </li>
             </ul>
           </div>
 
@@ -1273,6 +1301,7 @@ export default function App() {
   if (page === 'privacy') return <PrivacyPage onBack={() => navigate('home')} />;
   if (page === 'cookies') return <CookiePage onBack={() => navigate('home')} />;
   if (page === 'courses') return <ClaudeCoursesPage onBack={() => navigate('home')} />;
+  if (page === 'training') return <TrainingApplicationPage onBack={() => navigate('home')} />;
 
   return (
     <div className="min-h-screen bg-white font-sans antialiased">
@@ -1280,7 +1309,7 @@ export default function App() {
       <main>
         <HeroSection />
         <AboutSection />
-        <ServicesSection onNavigateToCourses={() => navigate('courses')} />
+        <ServicesSection onNavigateToCourses={() => navigate('courses')} onNavigateToTraining={() => navigate('training')} />
         <IndustriesSection />
         <ProcessSection />
         <WhyAISection />

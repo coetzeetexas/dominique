@@ -244,7 +244,7 @@ const HeroSection = () => {
           {/* Main Headline */}
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight animate-fade-in-up">
             Empowering Businesses with
-            <span className="block mt-2 bg-gradient-to-r from-white via-blue-100 to-accent-400 bg-clip-text text-transparent">
+            <span className="block mt-2 pb-2 bg-gradient-to-r from-white via-blue-100 to-accent-400 bg-clip-text text-transparent">
               AI & Digital Growth
             </span>
           </h1>

@@ -403,7 +403,7 @@ const StatCard = ({ stat, index, isInView }: { stat: { value: number; suffix: st
 };
 
 // Services Section
-const ServicesSection = () => {
+const ServicesSection = ({ onNavigateToCourses }: { onNavigateToCourses: () => void }) => {
   const { ref, isInView } = useInView(0.1);
 
   const services = [
@@ -471,7 +471,7 @@ const ServicesSection = () => {
           {services.map((service, index) => (
             <div
               key={service.title}
-              className={`group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-500 ${
+              className={`group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col ${
                 isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
               }`}
               style={{ transitionDelay: `${index * 150}ms` }}
@@ -483,7 +483,7 @@ const ServicesSection = () => {
               </div>
 
               {/* Items */}
-              <div className="p-6">
+              <div className="p-6 flex-1">
                 <ul className="space-y-3">
                   {service.items.map((item) => (
                     <li key={item.text} className="flex items-center gap-3 text-gray-700 group-hover:text-navy-900 transition-colors">
@@ -492,17 +492,41 @@ const ServicesSection = () => {
                     </li>
                   ))}
                 </ul>
+
+                {/* Claude Courses callout — AI Training card only */}
+                {service.title === 'AI Training' && (
+                  <div className="mt-5 rounded-xl bg-navy-50 border border-navy-200 p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <GraduationCap className="w-4 h-4 text-navy-700 flex-shrink-0" />
+                      <span className="text-xs font-bold text-navy-700 uppercase tracking-widest">Anthropic Academy</span>
+                    </div>
+                    <p className="text-sm text-navy-600 leading-snug">
+                      13 free, self-paced Claude courses — from AI basics to advanced API development.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* CTA */}
               <div className="px-6 pb-6">
-                <a
-                  href="#contact"
-                  className="group/link inline-flex items-center gap-2 text-accent-700 font-medium hover:text-accent-600 transition-colors"
-                >
-                  Learn More
-                  <ChevronRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
-                </a>
+                {service.title === 'AI Training' ? (
+                  <button
+                    onClick={onNavigateToCourses}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-navy-900 hover:bg-navy-800 text-white text-sm font-semibold rounded-lg transition-all hover:shadow-lg hover:-translate-y-0.5"
+                  >
+                    <GraduationCap className="w-4 h-4" />
+                    Explore Claude Courses
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <a
+                    href="#contact"
+                    className="group/link inline-flex items-center gap-2 text-accent-700 font-medium hover:text-accent-600 transition-colors"
+                  >
+                    Learn More
+                    <ChevronRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
+                  </a>
+                )}
               </div>
             </div>
           ))}
@@ -1245,7 +1269,6 @@ export default function App() {
     setPage(target);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
   if (page === 'terms') return <TermsPage onBack={() => navigate('home')} />;
   if (page === 'privacy') return <PrivacyPage onBack={() => navigate('home')} />;
   if (page === 'cookies') return <CookiePage onBack={() => navigate('home')} />;
@@ -1257,7 +1280,7 @@ export default function App() {
       <main>
         <HeroSection />
         <AboutSection />
-        <ServicesSection />
+        <ServicesSection onNavigateToCourses={() => navigate('courses')} />
         <IndustriesSection />
         <ProcessSection />
         <WhyAISection />

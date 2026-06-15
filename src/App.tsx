@@ -22,9 +22,7 @@ import {
   Phone,
   Mail,
   MapPin,
-  Linkedin,
-  Twitter,
-  Facebook,
+
   Workflow,
   Lightbulb,
   Rocket,
@@ -1166,29 +1164,6 @@ const ContactSection = () => {
             </div>
 
             {/* Social Links */}
-            <div className="flex gap-4">
-              <a
-                href="#"
-                className="w-12 h-12 bg-gray-100 hover:bg-navy-900 rounded-lg flex items-center justify-center transition-colors group"
-                aria-label="LinkedIn"
-              >
-                <Linkedin className="w-5 h-5 text-gray-600 group-hover:text-white" />
-              </a>
-              <a
-                href="#"
-                className="w-12 h-12 bg-gray-100 hover:bg-navy-900 rounded-lg flex items-center justify-center transition-colors group"
-                aria-label="Twitter"
-              >
-                <Twitter className="w-5 h-5 text-gray-600 group-hover:text-white" />
-              </a>
-              <a
-                href="#"
-                className="w-12 h-12 bg-gray-100 hover:bg-navy-900 rounded-lg flex items-center justify-center transition-colors group"
-                aria-label="Facebook"
-              >
-                <Facebook className="w-5 h-5 text-gray-600 group-hover:text-white" />
-              </a>
-            </div>
           </div>
         </div>
       </div>

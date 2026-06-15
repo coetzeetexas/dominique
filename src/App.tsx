@@ -132,7 +132,7 @@ const Navigation = () => {
           <a href="#" className="flex items-center group">
             <div className="rounded-lg overflow-hidden transition-all duration-300 group-hover:scale-105">
               <img
-                src="/WhatsApp_Image_2026-06-13_at_16.25.30.jpeg"
+                src="/WhatsApp_Image_2026-06-15_at_06.33.37.jpeg"
                 alt="KORIX LLC"
                 className="h-12 w-auto object-contain px-2 py-1"
               />
@@ -1145,7 +1145,7 @@ const Footer = ({ onNavigate }: { onNavigate: (page: Page) => void }) => {
             <div className="mb-4">
               <div className="inline-block bg-white rounded-lg overflow-hidden">
                 <img
-                  src="/WhatsApp_Image_2026-06-13_at_16.25.30.jpeg"
+                  src="/WhatsApp_Image_2026-06-15_at_06.33.37.jpeg"
                   alt="KORIX LLC"
                   className="h-14 w-auto object-contain px-3 py-2"
                 />

@@ -134,7 +134,7 @@ const Navigation = () => {
               <img
                 src="/WhatsApp_Image_2026-06-15_at_06.33.37.jpeg"
                 alt="KORIX LLC"
-                className="h-12 w-auto object-contain px-2 py-1"
+                className="h-24 w-auto object-contain px-2 py-1"
               />
             </div>
           </a>
@@ -1147,7 +1147,7 @@ const Footer = ({ onNavigate }: { onNavigate: (page: Page) => void }) => {
                 <img
                   src="/WhatsApp_Image_2026-06-15_at_06.33.37.jpeg"
                   alt="KORIX LLC"
-                  className="h-14 w-auto object-contain px-3 py-2"
+                  className="h-28 w-auto object-contain px-3 py-2"
                 />
               </div>
             </div>

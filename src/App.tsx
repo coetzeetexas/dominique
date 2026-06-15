@@ -275,8 +275,24 @@ const HeroSection = () => {
             </a>
           </div>
 
+          {/* Brand Video */}
+          <div className="mt-14 animate-fade-in" style={{ animationDelay: '0.6s' }}>
+            <div className="relative max-w-3xl mx-auto rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border border-white/10">
+              <div className="aspect-video">
+                <iframe
+                  src="https://www.youtube.com/embed/8185_KZx7NQ?rel=0&modestbranding=1"
+                  title="KORIX - Focus ° Execute ° Win"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                  className="w-full h-full"
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Trust Indicators */}
-          <div className="mt-16 pt-10 border-t border-white/10 animate-fade-in" style={{ animationDelay: '0.6s' }}>
+          <div className="mt-12 pt-10 border-t border-white/10 animate-fade-in" style={{ animationDelay: '0.8s' }}>
             <p className="text-white/60 text-sm mb-6">Trusted by forward-thinking organizations</p>
             <div className="flex flex-wrap justify-center items-center gap-8 text-white/40">
               {['Startups', 'Nonprofits', 'Small Businesses', 'Enterprises'].map((type) => (

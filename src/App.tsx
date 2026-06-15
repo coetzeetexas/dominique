@@ -234,7 +234,7 @@ const HeroSection = () => {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-white/90 text-sm font-medium mb-8 animate-fade-in-down">
             <MapPin className="w-4 h-4 text-accent-500" />
-            <span>Dallas, Texas</span>
+            <span>Fort Worth, Dallas, Texas</span>
             <span className="w-1 h-1 bg-white/40 rounded-full" />
             <Sparkles className="w-4 h-4 text-accent-500" />
             <span>AI & Digital Innovation</span>
@@ -1064,7 +1064,7 @@ const ContactSection = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-navy-900">Location</h3>
-                  <p className="text-gray-600">Dallas, Texas, USA</p>
+                  <p className="text-gray-600">Fort Worth, Dallas, Texas, USA</p>
                 </div>
               </div>
 
@@ -1074,7 +1074,7 @@ const ContactSection = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-navy-900">Email</h3>
-                  <p className="text-gray-600">contact@korixllc.com</p>
+                  <p className="text-gray-600">korixllc@gmail.com</p>
                 </div>
               </div>
 
@@ -1099,7 +1099,7 @@ const ContactSection = () => {
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                title="KORIX LLC Location - Dallas, Texas"
+                title="KORIX LLC Location - Fort Worth, Dallas, Texas"
               />
             </div>
 
@@ -1202,7 +1202,11 @@ const Footer = ({ onNavigate }: { onNavigate: (page: Page) => void }) => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="pt-8 border-t border-white/10 space-y-4">
+          <p className="text-white/30 text-xs text-center tracking-wide">
+            KORIX LLC &ndash; Texas Limited Liability Company &nbsp;&bull;&nbsp; EIN: 42-2983677 &nbsp;&bull;&nbsp; Registered in the State of Texas
+          </p>
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-white/40 text-sm">
             Copyright &copy; {new Date().getFullYear()} KORIX LLC. All rights reserved.
           </p>
@@ -1216,6 +1220,7 @@ const Footer = ({ onNavigate }: { onNavigate: (page: Page) => void }) => {
             <button onClick={() => onNavigate('cookies')} className="text-white/60 hover:text-white transition-colors">
               Cookie Policy
             </button>
+          </div>
           </div>
         </div>
       </div>

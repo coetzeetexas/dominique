@@ -3,8 +3,8 @@ import { ArrowLeft, Shield, FileText, Cookie } from 'lucide-react';
 const EFFECTIVE_DATE = 'June 14, 2026';
 const COMPANY = 'KORIX LLC';
 const STATE = 'Texas';
-const EMAIL = 'contact@korixllc.com';
-const ADDRESS = 'Dallas, Texas, USA';
+const EMAIL = 'korixllc@gmail.com';
+const ADDRESS = 'Fort Worth, Dallas, Texas, USA';
 
 interface LegalPageProps {
   onBack: () => void;

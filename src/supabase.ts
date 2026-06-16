@@ -1,13 +1,11 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    'Supabase environment variables are missing. ' +
-    'Make sure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set in your .env file.'
-  );
-}
+export const isSupabaseConfigured = !!(url && key);
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Only instantiate if env vars are present — avoids crashing the whole app on load
+export const supabase: SupabaseClient = isSupabaseConfigured
+  ? createClient(url!, key!)
+  : (null as unknown as SupabaseClient);

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { User } from '@supabase/supabase-js';
-import { supabase } from './supabase';
+import { supabase, isSupabaseConfigured } from './supabase';
 import {
   LogOut,
   Users,
@@ -567,6 +567,7 @@ export function AdminDashboard({ onBack }: Props) {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
+    if (!isSupabaseConfigured) { setChecking(false); return; }
     supabase.auth.getSession().then(({ data }) => {
       setUser(data.session?.user ?? null);
       setChecking(false);
@@ -586,6 +587,29 @@ export function AdminDashboard({ onBack }: Props) {
     return (
       <div className="min-h-screen bg-navy-950 flex items-center justify-center">
         <Loader2 className="w-6 h-6 animate-spin text-white/50" />
+      </div>
+    );
+  }
+
+  if (!isSupabaseConfigured) {
+    return (
+      <div className="min-h-screen bg-navy-950 flex items-center justify-center px-4">
+        <div className="bg-white rounded-2xl shadow-2xl p-10 max-w-md w-full text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Database Not Configured</h2>
+          <p className="text-gray-500 text-sm mb-6">
+            The <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono">VITE_SUPABASE_URL</code> and{' '}
+            <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono">VITE_SUPABASE_ANON_KEY</code>{' '}
+            environment variables are missing from this deployment.
+          </p>
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 mx-auto text-sm text-navy-700 font-medium hover:text-navy-900 transition"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to site
+          </button>
+        </div>
       </div>
     );
   }

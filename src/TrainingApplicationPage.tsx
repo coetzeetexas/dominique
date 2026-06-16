@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { supabase } from './supabase';
+import { supabase, isSupabaseConfigured } from './supabase';
 import {
   ArrowLeft,
   ArrowRight,
@@ -266,6 +266,29 @@ export function TrainingApplicationPage({ onBack }: Props) {
       setSubmitting(false);
     }
   };
+
+  if (!isSupabaseConfigured) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-navy-950 via-navy-900 to-navy-800 flex items-center justify-center px-4">
+        <div className="bg-white rounded-2xl shadow-2xl p-10 max-w-md w-full text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Service Unavailable</h2>
+          <p className="text-gray-500 text-sm mb-6">
+            The training application form is temporarily unavailable. Please email us directly at{' '}
+            <a href="mailto:korixllc@gmail.com" className="text-navy-700 font-medium hover:underline">korixllc@gmail.com</a>{' '}
+            to apply.
+          </p>
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 mx-auto text-sm text-navy-700 font-medium hover:text-navy-900 transition"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to site
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (submitted) {
     return (

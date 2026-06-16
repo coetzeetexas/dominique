@@ -118,7 +118,7 @@ const Navigation = () => {
     { href: '#about', label: 'About' },
     { href: '#services', label: 'Services' },
     { href: '#process', label: 'Process' },
-    { href: '#testimonials', label: 'Testimonials' },
+    { href: '#faq', label: 'FAQ' },
     { href: '#contact', label: 'Contact' },
   ];
 
@@ -347,10 +347,11 @@ const AboutSection = () => {
             </h2>
 
             <p className="text-lg text-gray-600 leading-relaxed mb-8">
-              KORIX LLC is a Dallas-based technology consulting agency specializing in AI training,
+              KORIX LLC is a Dallas-Fort Worth technology consulting agency specializing in AI training,
               AI implementation, business automation, and social media growth strategies. We help
-              startups, nonprofits, and established businesses unlock efficiency, improve
-              decision-making, and accelerate growth through practical AI solutions.
+              startups, nonprofits, and established businesses across the DFW Metroplex and Texas
+              unlock efficiency, improve decision-making, and accelerate growth through practical,
+              results-driven AI solutions.
             </p>
 
             <div className="space-y-6">
@@ -474,11 +475,11 @@ const ServicesSection = ({ onNavigateToCourses, onNavigateToTraining }: { onNavi
             Our Services
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4">
-            Comprehensive Solutions for Your Growth
+            Comprehensive AI &amp; Digital Solutions for Texas Businesses
           </h2>
           <p className="text-lg text-gray-600">
-            We offer end-to-end AI and digital marketing services designed to transform
-            your business operations and accelerate growth.
+            We offer end-to-end AI training, consulting, and digital marketing services designed to transform
+            your business operations and accelerate growth across Dallas-Fort Worth and Texas.
           </p>
         </div>
 
@@ -602,10 +603,10 @@ const IndustriesSection = () => {
             Who We Serve
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
-            Industries We Serve
+            Industries We Serve Across Texas
           </h2>
           <p className="text-lg text-white/70">
-            Our solutions adapt to the unique challenges and opportunities across various sectors.
+            Our solutions adapt to the unique challenges and opportunities across various sectors throughout the DFW Metroplex and beyond.
           </p>
         </div>
 
@@ -652,7 +653,7 @@ const ProcessSection = () => {
             Our Approach
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4">
-            Our Proven Process
+            Our Proven Process for Texas Business Transformation
           </h2>
           <p className="text-lg text-gray-600">
             A structured methodology that ensures successful AI and digital transformation.
@@ -1171,6 +1172,82 @@ const ContactSection = () => {
   );
 };
 
+// FAQ Section
+const FAQSection = () => {
+  const { ref, isInView } = useInView(0.1);
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  const faqs = [
+    {
+      q: 'What AI training services does KORIX offer in Dallas-Fort Worth?',
+      a: 'We offer AI Fundamentals workshops, Employee AI Training, ChatGPT & Generative AI Training, Prompt Engineering, and AI Productivity Systems. All programs are tailored to your team size and industry — from startups to enterprises across DFW and Texas.',
+    },
+    {
+      q: 'Do you serve businesses outside of Dallas?',
+      a: 'Absolutely. We serve clients across the entire DFW Metroplex — Fort Worth, Arlington, Plano, Frisco, Irving, McKinney — as well as Houston, Austin, and businesses throughout Texas. Remote consulting is available nationwide.',
+    },
+    {
+      q: 'What industries do you work with?',
+      a: 'We serve small businesses, startups, nonprofits, educational organizations, government contractors, and professional services firms. Our AI and digital solutions are customized to each sector\'s unique challenges and compliance requirements.',
+    },
+    {
+      q: 'How does your AI consulting process work?',
+      a: 'We follow five steps: Discover (audit your current operations), Strategize (build a custom AI roadmap), Implement (deploy solutions with minimal disruption), Train (upskill your team), and Scale (optimize for sustained competitive advantage). It starts with a free consultation.',
+    },
+    {
+      q: 'Do you offer free training for unemployed individuals in Texas?',
+      a: 'Yes. Our free workforce training program helps unemployed Texans build AI and digital skills to re-enter the job market. Apply through our Training Application and a member of our team will be in touch.',
+    },
+    {
+      q: 'How quickly can you start an AI project?',
+      a: 'Most projects begin within 1–2 weeks of the initial consultation. Our structured onboarding ensures we fully understand your goals before writing a single line of strategy.',
+    },
+  ];
+
+  return (
+    <section id="faq" className="py-20 lg:py-32 bg-gray-50 relative overflow-hidden">
+      <div ref={ref} className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+        <div className={`text-center mb-16 transition-all duration-700 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-navy-50 rounded-full text-navy-700 text-sm font-medium mb-6">
+            <MessageSquare className="w-4 h-4" />
+            FAQ
+          </div>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4">
+            Frequently Asked Questions
+          </h2>
+          <p className="text-lg text-gray-600">
+            Common questions about our AI training and consulting services in Dallas-Fort Worth, Texas.
+          </p>
+        </div>
+
+        <div className={`space-y-3 transition-all duration-700 delay-100 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          {faqs.map((faq, index) => (
+            <div key={index} className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+              <button
+                onClick={() => setOpenIndex(openIndex === index ? null : index)}
+                className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-gray-50 transition-colors"
+                aria-expanded={openIndex === index}
+              >
+                <span className="font-semibold text-navy-900 pr-4">{faq.q}</span>
+                <ChevronRight
+                  className={`w-5 h-5 text-accent-700 flex-shrink-0 transition-transform duration-300 ${
+                    openIndex === index ? 'rotate-90' : ''
+                  }`}
+                />
+              </button>
+              {openIndex === index && (
+                <div className="px-6 pb-6 border-t border-gray-100">
+                  <p className="text-gray-600 leading-relaxed pt-4">{faq.a}</p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
 // Footer
 const Footer = ({ onNavigate }: { onNavigate: (page: Page) => void }) => {
   return (
@@ -1206,6 +1283,7 @@ const Footer = ({ onNavigate }: { onNavigate: (page: Page) => void }) => {
                 { href: '#services', label: 'Services' },
                 { href: '#process', label: 'Our Process' },
                 { href: '#testimonials', label: 'Testimonials' },
+                { href: '#faq', label: 'FAQ' },
                 { href: '#contact', label: 'Contact' },
               ].map((link) => (
                 <li key={link.href}>
@@ -1302,7 +1380,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-white font-sans antialiased">
       <Navigation />
-      <main>
+      <main aria-label="KORIX LLC – AI Training &amp; Consulting, Dallas-Fort Worth Texas">
         <HeroSection />
         <AboutSection />
         <ServicesSection onNavigateToCourses={() => navigate('courses')} onNavigateToTraining={() => navigate('training')} />
@@ -1310,6 +1388,7 @@ export default function App() {
         <ProcessSection />
         <WhyAISection />
         <TestimonialsSection />
+        <FAQSection />
         <CTASection />
         <ContactSection />
       </main>

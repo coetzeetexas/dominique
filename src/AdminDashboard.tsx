@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from './supabase';
+import { SOC_CODES, SOCEntry, getMajorGroup } from './socCodes';
 import {
   LogOut, Users, CheckCircle2, Clock, XCircle, Search, ChevronDown, Eye, X,
   ArrowLeft, Download, Filter, RefreshCw, FileText, Phone, Mail, MapPin,
   Briefcase, GraduationCap, Calendar, Zap, Target, AlertCircle, Loader2,
   Shield, TrendingUp, UserCheck, Plus, Trash2, LayoutDashboard, Settings,
-  Building2, Edit2, Save,
+  Building2, Edit2, Save, Tag, ChevronRight,
 } from 'lucide-react';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -28,12 +29,14 @@ interface Application {
   desired_location: string; available_start_date: string; hours_per_week: string;
   willing_to_travel: boolean; cv_file_url: string | null; cv_file_name: string | null;
   consent_data_use: boolean; consent_communication: boolean; status: AppStatus;
+  desired_soc_code: string | null; desired_soc_title: string | null;
 }
 
 interface Vacancy {
   id: string; created_at: string; title: string; department: string; location: string;
   type: string; status: VacancyStatus; description: string | null; requirements: string | null;
   salary_min: number | null; salary_max: number | null; deadline: string | null; positions: number;
+  soc_code: string | null; soc_title: string | null;
 }
 
 // ── Status Config ─────────────────────────────────────────────────────────────
@@ -72,6 +75,100 @@ function VacancyBadge({ status }: { status: VacancyStatus }) {
 
 const inputCls = "w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white";
 const labelCls = "block text-xs font-medium text-gray-600 mb-1";
+
+// ── SOC Selector ──────────────────────────────────────────────────────────────
+function SOCSelector({ value, onChange, placeholder }: {
+  value: { code: string; title: string } | null;
+  onChange: (v: { code: string; title: string } | null) => void;
+  placeholder?: string;
+}) {
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return SOC_CODES.filter(c => c.level === 'major');
+    return SOC_CODES.filter(c =>
+      c.code.toLowerCase().includes(q) || c.title.toLowerCase().includes(q)
+    ).slice(0, 25);
+  }, [query]);
+
+  const select = (entry: SOCEntry) => {
+    onChange({ code: entry.code, title: entry.title });
+    setQuery('');
+    setOpen(false);
+  };
+
+  const clear = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onChange(null);
+    setQuery('');
+  };
+
+  return (
+    <div ref={ref} className="relative">
+      {value ? (
+        <div className="flex items-center gap-2 px-3 py-2 border border-blue-300 bg-blue-50 rounded-lg">
+          <Tag className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <span className="text-xs font-bold text-blue-700 mr-1.5">{value.code}</span>
+            <span className="text-xs text-blue-600 truncate">{value.title}</span>
+          </div>
+          <button type="button" onClick={clear}
+            className="flex-shrink-0 text-blue-400 hover:text-blue-700 transition">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ) : (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+          <input
+            value={query}
+            onChange={e => { setQuery(e.target.value); setOpen(true); }}
+            onFocus={() => setOpen(true)}
+            placeholder={placeholder ?? 'Search SOC code or title…'}
+            className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white"
+          />
+        </div>
+      )}
+
+      {open && !value && (
+        <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg max-h-56 overflow-y-auto">
+          {filtered.length === 0 ? (
+            <div className="px-4 py-3 text-xs text-gray-400">No matching SOC codes</div>
+          ) : (
+            <>
+              {!query.trim() && (
+                <div className="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">
+                  Major Groups
+                </div>
+              )}
+              {filtered.map(entry => (
+                <button key={entry.code} type="button" onClick={() => select(entry)}
+                  className="w-full flex items-start gap-3 px-3 py-2.5 hover:bg-blue-50 transition text-left">
+                  <span className={`text-xs font-bold tabular-nums flex-shrink-0 mt-0.5 ${
+                    entry.level === 'major' ? 'text-blue-600' : 'text-gray-500'
+                  }`}>{entry.code}</span>
+                  <span className="text-xs text-gray-700 leading-tight">{entry.title}</span>
+                  {entry.level === 'major' && <ChevronRight className="w-3 h-3 text-gray-300 ml-auto flex-shrink-0 mt-0.5" />}
+                </button>
+              ))}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ── Charts ────────────────────────────────────────────────────────────────────
 function PipelineChart({ apps }: { apps: Application[] }) {
@@ -319,6 +416,17 @@ function AppDetailModal({ app, onClose, onStatusChange }: {
               <Row label="Available From" value={app.available_start_date ? new Date(app.available_start_date).toLocaleDateString() : null} />
               <Row label="Hours / Week" value={app.hours_per_week} />
               <Row label="Willing to Travel" value={app.willing_to_travel ? 'Yes' : 'No'} />
+              {app.desired_soc_code && (
+                <div className="flex justify-between items-start py-2 border-b border-gray-50 last:border-0">
+                  <span className="text-xs text-gray-500 flex-shrink-0 w-40">SOC Classification</span>
+                  <span className="text-right">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100">
+                      {app.desired_soc_code}
+                    </span>
+                    {app.desired_soc_title && <span className="block text-xs text-gray-500 mt-0.5">{app.desired_soc_title}</span>}
+                  </span>
+                </div>
+              )}
             </div>
           </Section>
           {app.cv_file_url && (
@@ -345,7 +453,7 @@ type VacancyForm = Omit<Vacancy, 'id' | 'created_at'>;
 const emptyVacancy: VacancyForm = {
   title: '', department: '', location: '', type: 'Full-time', status: 'open',
   description: '', requirements: '', salary_min: null, salary_max: null,
-  deadline: null, positions: 1,
+  deadline: null, positions: 1, soc_code: null, soc_title: null,
 };
 
 function VacancyModal({ vacancy, onClose, onSave }: {
@@ -357,6 +465,7 @@ function VacancyModal({ vacancy, onClose, onSave }: {
     type: vacancy.type, status: vacancy.status, description: vacancy.description ?? '',
     requirements: vacancy.requirements ?? '', salary_min: vacancy.salary_min,
     salary_max: vacancy.salary_max, deadline: vacancy.deadline, positions: vacancy.positions,
+    soc_code: vacancy.soc_code, soc_title: vacancy.soc_title,
   } : emptyVacancy);
   const [saving, setSaving] = useState(false);
   const set = (k: keyof VacancyForm, v: unknown) => setForm(f => ({ ...f, [k]: v }));
@@ -422,6 +531,13 @@ function VacancyModal({ vacancy, onClose, onSave }: {
                 onChange={e => set('salary_max', e.target.value ? parseInt(e.target.value) : null)} placeholder="e.g. 60000" />
             </div>
             <div className="col-span-2">
+              <label className={labelCls}>SOC Classification (2018)</label>
+              <SOCSelector
+                value={form.soc_code ? { code: form.soc_code, title: form.soc_title ?? '' } : null}
+                onChange={v => { set('soc_code', v?.code ?? null); set('soc_title', v?.title ?? null); }}
+              />
+            </div>
+            <div className="col-span-2">
               <label className={labelCls}>Job Description</label>
               <textarea className={inputCls + ' resize-none'} rows={3} value={form.description ?? ''}
                 onChange={e => set('description', e.target.value)} placeholder="Describe the role..." />
@@ -480,6 +596,30 @@ function OverviewTab({ apps, vacancies }: { apps: Application[]; vacancies: Vaca
   // Job types
   const typeMap: Record<string, number> = {};
   apps.forEach(a => { if (a.desired_job_type) typeMap[a.desired_job_type] = (typeMap[a.desired_job_type] ?? 0) + 1; });
+
+  // SOC breakdown — vacancies grouped by major group
+  const vacancySocMap: Record<string, { title: string; count: number }> = {};
+  vacancies.forEach(v => {
+    if (!v.soc_code) return;
+    const major = getMajorGroup(v.soc_code);
+    if (!major) return;
+    const key = major.code;
+    if (!vacancySocMap[key]) vacancySocMap[key] = { title: major.title, count: 0 };
+    vacancySocMap[key].count += 1;
+  });
+  const topVacancySOC = Object.entries(vacancySocMap).sort((a, b) => b[1].count - a[1].count).slice(0, 6);
+
+  // SOC breakdown — candidate desired occupations grouped by major group
+  const candidateSocMap: Record<string, { title: string; count: number }> = {};
+  apps.forEach(a => {
+    if (!a.desired_soc_code) return;
+    const major = getMajorGroup(a.desired_soc_code);
+    if (!major) return;
+    const key = major.code;
+    if (!candidateSocMap[key]) candidateSocMap[key] = { title: major.title, count: 0 };
+    candidateSocMap[key].count += 1;
+  });
+  const topCandidateSOC = Object.entries(candidateSocMap).sort((a, b) => b[1].count - a[1].count).slice(0, 6);
   const typeTotal = Object.values(typeMap).reduce((s, v) => s + v, 0);
 
   return (
@@ -585,6 +725,62 @@ function OverviewTab({ apps, vacancies }: { apps: Application[]; vacancies: Vaca
           )}
         </div>
       </div>
+
+      {/* SOC Classification breakdown */}
+      {(topVacancySOC.length > 0 || topCandidateSOC.length > 0) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {topVacancySOC.length > 0 && (
+            <div className="bg-white rounded-xl border border-gray-100 p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Tag className="w-4 h-4 text-blue-500" />
+                <h3 className="text-sm font-bold text-gray-800">Vacancies by SOC Major Group</h3>
+              </div>
+              <div className="space-y-2.5">
+                {topVacancySOC.map(([code, { title, count }]) => {
+                  const maxCount = topVacancySOC[0][1].count;
+                  return (
+                    <div key={code} className="flex items-center gap-3">
+                      <span className="text-xs font-bold text-blue-600 w-14 flex-shrink-0 tabular-nums">{code}</span>
+                      <div className="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
+                        <div className="h-full bg-blue-400 rounded-full flex items-center justify-end pr-2 transition-all duration-500"
+                          style={{ width: `${Math.max(Math.round((count / maxCount) * 100), 12)}%` }}>
+                          <span className="text-xs font-bold text-white">{count}</span>
+                        </div>
+                      </div>
+                      <span className="text-xs text-gray-500 flex-shrink-0 truncate max-w-32 hidden sm:block">{title}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          {topCandidateSOC.length > 0 && (
+            <div className="bg-white rounded-xl border border-gray-100 p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Tag className="w-4 h-4 text-green-500" />
+                <h3 className="text-sm font-bold text-gray-800">Candidates by Desired SOC Group</h3>
+              </div>
+              <div className="space-y-2.5">
+                {topCandidateSOC.map(([code, { title, count }]) => {
+                  const maxCount = topCandidateSOC[0][1].count;
+                  return (
+                    <div key={code} className="flex items-center gap-3">
+                      <span className="text-xs font-bold text-green-600 w-14 flex-shrink-0 tabular-nums">{code}</span>
+                      <div className="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
+                        <div className="h-full bg-green-400 rounded-full flex items-center justify-end pr-2 transition-all duration-500"
+                          style={{ width: `${Math.max(Math.round((count / maxCount) * 100), 12)}%` }}>
+                          <span className="text-xs font-bold text-white">{count}</span>
+                        </div>
+                      </div>
+                      <span className="text-xs text-gray-500 flex-shrink-0 truncate max-w-32 hidden sm:block">{title}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -603,6 +799,7 @@ const emptyCandidate: CandidateForm = {
   desired_job_type: 'Full-time', desired_industry: '', desired_location: '',
   available_start_date: '', hours_per_week: '40', willing_to_travel: false,
   consent_data_use: true, consent_communication: true, status: 'pending',
+  desired_soc_code: null, desired_soc_title: null,
 };
 
 type CandidateSection = 'personal' | 'employment' | 'education' | 'skills' | 'preferences';
@@ -680,6 +877,7 @@ function CandidateModal({ candidate, onClose, onSave }: {
       hours_per_week: candidate.hours_per_week, willing_to_travel: candidate.willing_to_travel,
       consent_data_use: candidate.consent_data_use, consent_communication: candidate.consent_communication,
       status: candidate.status,
+      desired_soc_code: candidate.desired_soc_code, desired_soc_title: candidate.desired_soc_title,
     } : emptyCandidate
   );
   const [saving, setSaving] = useState(false);
@@ -931,6 +1129,14 @@ function CandidateModal({ candidate, onClose, onSave }: {
                     onChange={e => set('willing_to_travel', e.target.checked)}
                     className="w-4 h-4 rounded border-gray-300 text-blue-600" />
                   <label htmlFor="travel" className="text-sm text-gray-700">Willing to travel</label>
+                </div>
+                <div className="col-span-2">
+                  <label className={labelCls}>Desired SOC Classification (2018)</label>
+                  <SOCSelector
+                    value={form.desired_soc_code ? { code: form.desired_soc_code, title: form.desired_soc_title ?? '' } : null}
+                    onChange={v => { set('desired_soc_code', v?.code ?? null); set('desired_soc_title', v?.title ?? null); }}
+                    placeholder="Search occupation type…"
+                  />
                 </div>
               </div>
             )}
@@ -1187,7 +1393,7 @@ function VacanciesTab({ vacancies, loading, onAdd, onEdit, onDelete, onStatusCha
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
-                {['Position', 'Department', 'Location', 'Type', 'Salary', 'Positions', 'Deadline', 'Status', ''].map(h => (
+                {['Position', 'SOC', 'Department', 'Location', 'Type', 'Salary', 'Positions', 'Deadline', 'Status', ''].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -1198,6 +1404,15 @@ function VacanciesTab({ vacancies, loading, onAdd, onEdit, onDelete, onStatusCha
                   <td className="px-4 py-3">
                     <p className="font-semibold text-gray-900 whitespace-nowrap">{v.title}</p>
                     <p className="text-xs text-gray-400">{new Date(v.created_at).toLocaleDateString()}</p>
+                  </td>
+                  <td className="px-4 py-3">
+                    {v.soc_code ? (
+                      <div title={v.soc_title ?? ''} className="flex items-center gap-1">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-blue-50 text-blue-700 border border-blue-100 whitespace-nowrap">
+                          {v.soc_code}
+                        </span>
+                      </div>
+                    ) : <span className="text-gray-300 text-xs">—</span>}
                   </td>
                   <td className="px-4 py-3"><span className="text-xs text-gray-600">{v.department}</span></td>
                   <td className="px-4 py-3">

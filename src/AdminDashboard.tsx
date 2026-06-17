@@ -823,11 +823,299 @@ function VacanciesTab({ vacancies, loading, onAdd, onEdit, onDelete, onStatusCha
 }
 
 // ── Settings Tab ──────────────────────────────────────────────────────────────
+interface AdminUser {
+  id: string;
+  email: string;
+  created_at: string;
+  last_sign_in_at: string | null;
+  email_confirmed_at: string | null;
+}
+
+type UserModalMode = 'add' | 'edit';
+
+function UserModal({ mode, user: editUser, currentUserId, onClose, onSave }: {
+  mode: UserModalMode;
+  user: AdminUser | null;
+  currentUserId: string;
+  onClose: () => void;
+  onSave: () => void;
+}) {
+  const [email, setEmail] = useState(editUser?.email ?? '');
+  const [password, setPassword] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(''); setSaving(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      const body = mode === 'add'
+        ? { action: 'create', email, password }
+        : { action: 'update', id: editUser!.id, email, password: password || undefined };
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/user-management`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        }
+      );
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+      onSave();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+          <h2 className="font-bold text-base">
+            {mode === 'add' ? 'Add Administrator' : 'Edit User'}
+          </h2>
+          <button onClick={onClose} className="p-1.5 text-white/60 hover:text-white transition">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div>
+            <label className={labelCls}>Email Address</label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                placeholder="admin@korixllc.com" />
+            </div>
+          </div>
+          <div>
+            <label className={labelCls}>
+              {mode === 'add' ? 'Password' : 'New Password'}
+              {mode === 'edit' && <span className="text-gray-400 font-normal ml-1">(leave blank to keep current)</span>}
+            </label>
+            <div className="relative">
+              <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input type="password" required={mode === 'add'} value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder={mode === 'add' ? 'Min. 8 characters' : '••••••••'}
+                minLength={mode === 'add' ? 8 : undefined}
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500" />
+            </div>
+          </div>
+
+          {error && (
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />{error}
+            </div>
+          )}
+
+          {mode === 'edit' && editUser?.id === currentUserId && (
+            <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-700">
+              <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+              You are editing your own account.
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-1">
+            <button type="button" onClick={onClose}
+              className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+              Cancel
+            </button>
+            <button type="submit" disabled={saving}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl transition disabled:opacity-60">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              {saving ? 'Saving…' : mode === 'add' ? 'Create User' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function UserManagementCard({ currentUser }: { currentUser: User }) {
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [modal, setModal] = useState<{ open: boolean; mode: UserModalMode; user: AdminUser | null }>({
+    open: false, mode: 'add', user: null,
+  });
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const fetchUsers = useCallback(async () => {
+    setLoading(true); setError('');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/user-management`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'list' }),
+        }
+      );
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+      setUsers(json.data as AdminUser[]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load users');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchUsers(); }, [fetchUsers]);
+
+  const deleteUser = async (u: AdminUser) => {
+    if (!confirm(`Delete ${u.email}? This cannot be undone.`)) return;
+    setDeletingId(u.id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/user-management`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'delete', id: u.id }),
+        }
+      );
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+      setUsers(prev => prev.filter(x => x.id !== u.id));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to delete user');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const openAdd = () => setModal({ open: true, mode: 'add', user: null });
+  const openEdit = (u: AdminUser) => setModal({ open: true, mode: 'edit', user: u });
+  const closeModal = () => setModal({ open: false, mode: 'add', user: null });
+  const handleSaved = () => { closeModal(); fetchUsers(); };
+
+  return (
+    <>
+      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div>
+            <h3 className="font-bold text-gray-900">User Management</h3>
+            <p className="text-xs text-gray-400 mt-0.5">Administrators who can access this portal</p>
+          </div>
+          <button onClick={openAdd}
+            className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-lg transition">
+            <Plus className="w-4 h-4" />Add User
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+          </div>
+        ) : error ? (
+          <div className="flex items-center gap-2 p-6 text-sm text-red-600">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />{error}
+            <button onClick={fetchUsers} className="ml-auto text-xs text-blue-600 hover:underline flex items-center gap-1">
+              <RefreshCw className="w-3 h-3" />Retry
+            </button>
+          </div>
+        ) : users.length === 0 ? (
+          <div className="text-center py-12 text-gray-400 text-sm">No users found</div>
+        ) : (
+          <div className="divide-y divide-gray-50">
+            {users.map(u => {
+              const isCurrentUser = u.id === currentUser.id;
+              const initials = (u.email ?? '?').charAt(0).toUpperCase();
+              return (
+                <div key={u.id} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50/50 transition">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${
+                    isCurrentUser ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'
+                  }`}>
+                    {initials}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{u.email}</p>
+                      {isCurrentUser && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100 flex-shrink-0">
+                          You
+                        </span>
+                      )}
+                      {u.email_confirmed_at ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100 flex-shrink-0">
+                          <CheckCircle2 className="w-3 h-3" />Verified
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-100 flex-shrink-0">
+                          Unverified
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-400">
+                      <span>Added {new Date(u.created_at).toLocaleDateString()}</span>
+                      {u.last_sign_in_at && (
+                        <span>Last login {new Date(u.last_sign_in_at).toLocaleDateString()}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button onClick={() => openEdit(u)}
+                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                      title="Edit user">
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => deleteUser(u)}
+                      disabled={isCurrentUser || deletingId === u.id}
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition disabled:opacity-30 disabled:cursor-not-allowed"
+                      title={isCurrentUser ? "Cannot delete your own account" : "Delete user"}>
+                      {deletingId === u.id
+                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                        : <Trash2 className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {!loading && !error && users.length > 0 && (
+          <div className="px-6 py-3 border-t border-gray-50 flex items-center justify-between text-xs text-gray-400">
+            <span>{users.length} user{users.length !== 1 ? 's' : ''} total</span>
+            <button onClick={fetchUsers} className="flex items-center gap-1 hover:text-blue-600 transition">
+              <RefreshCw className="w-3 h-3" />Refresh
+            </button>
+          </div>
+        )}
+      </div>
+
+      {modal.open && (
+        <UserModal
+          mode={modal.mode}
+          user={modal.user}
+          currentUserId={currentUser.id}
+          onClose={closeModal}
+          onSave={handleSaved}
+        />
+      )}
+    </>
+  );
+}
+
 function SettingsTab({ user, onLogout }: { user: User; onLogout: () => void }) {
   return (
-    <div className="max-w-xl space-y-6">
+    <div className="max-w-3xl space-y-6">
+      <UserManagementCard currentUser={user} />
+
       <div className="bg-white rounded-xl border border-gray-100 p-6">
-        <h3 className="font-bold text-gray-900 mb-4">Account</h3>
+        <h3 className="font-bold text-gray-900 mb-4">Your Account</h3>
         <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
           <div className="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold text-lg">
             {(user.email ?? 'A').charAt(0).toUpperCase()}
@@ -844,6 +1132,7 @@ function SettingsTab({ user, onLogout }: { user: User; onLogout: () => void }) {
           </button>
         </div>
       </div>
+
       <div className="bg-white rounded-xl border border-gray-100 p-6">
         <h3 className="font-bold text-gray-900 mb-1">About</h3>
         <p className="text-sm text-gray-500 mb-4">KORIX LLC Recruitment Manager — Admin Dashboard</p>

@@ -589,20 +589,419 @@ function OverviewTab({ apps, vacancies }: { apps: Application[]; vacancies: Vaca
   );
 }
 
+// ── Candidate Form Modal ──────────────────────────────────────────────────────
+type CandidateForm = Omit<Application, 'id' | 'created_at' | 'cv_file_url' | 'cv_file_name'>;
+
+const emptyCandidate: CandidateForm = {
+  full_name: '', age: 25, email: '', phone: '',
+  address: '', city: '', state: '', zip: '',
+  emergency_contact_name: '', emergency_contact_phone: '', emergency_contact_relation: '',
+  employment_status: 'unemployed', last_employer: null, last_job_title: null,
+  years_experience: null, industries: [],
+  highest_education: 'High School', institution: null, field_of_study: null, certifications: null,
+  technical_skills: [], soft_skills: [], languages: [], other_skills: null,
+  desired_job_type: 'Full-time', desired_industry: '', desired_location: '',
+  available_start_date: '', hours_per_week: '40', willing_to_travel: false,
+  consent_data_use: true, consent_communication: true, status: 'pending',
+};
+
+type CandidateSection = 'personal' | 'employment' | 'education' | 'skills' | 'preferences';
+const CANDIDATE_SECTIONS: { id: CandidateSection; label: string }[] = [
+  { id: 'personal',    label: 'Personal' },
+  { id: 'employment',  label: 'Employment' },
+  { id: 'education',   label: 'Education' },
+  { id: 'skills',      label: 'Skills' },
+  { id: 'preferences', label: 'Preferences' },
+];
+
+function TagInput({ label, values, onChange, placeholder }: {
+  label: string; values: string[];
+  onChange: (v: string[]) => void; placeholder?: string;
+}) {
+  const [input, setInput] = useState('');
+  const add = () => {
+    const trimmed = input.trim();
+    if (trimmed && !values.includes(trimmed)) onChange([...values, trimmed]);
+    setInput('');
+  };
+  const remove = (v: string) => onChange(values.filter(x => x !== v));
+  return (
+    <div>
+      <label className={labelCls}>{label}</label>
+      <div className="flex gap-2 mb-2">
+        <input value={input} onChange={e => setInput(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); add(); } }}
+          placeholder={placeholder ?? 'Type and press Enter'}
+          className={inputCls} />
+        <button type="button" onClick={add}
+          className="px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium text-slate-700 transition flex-shrink-0">
+          Add
+        </button>
+      </div>
+      {values.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {values.map(v => (
+            <span key={v} className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-100 text-xs rounded-full font-medium">
+              {v}
+              <button type="button" onClick={() => remove(v)} className="text-blue-400 hover:text-blue-700 transition">
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CandidateModal({ candidate, onClose, onSave }: {
+  candidate: Application | null;
+  onClose: () => void;
+  onSave: (f: CandidateForm) => Promise<void>;
+}) {
+  const [section, setSection] = useState<CandidateSection>('personal');
+  const [form, setForm] = useState<CandidateForm>(() =>
+    candidate ? {
+      full_name: candidate.full_name, age: candidate.age, email: candidate.email,
+      phone: candidate.phone, address: candidate.address, city: candidate.city,
+      state: candidate.state, zip: candidate.zip,
+      emergency_contact_name: candidate.emergency_contact_name,
+      emergency_contact_phone: candidate.emergency_contact_phone,
+      emergency_contact_relation: candidate.emergency_contact_relation,
+      employment_status: candidate.employment_status,
+      last_employer: candidate.last_employer, last_job_title: candidate.last_job_title,
+      years_experience: candidate.years_experience, industries: candidate.industries ?? [],
+      highest_education: candidate.highest_education, institution: candidate.institution,
+      field_of_study: candidate.field_of_study, certifications: candidate.certifications,
+      technical_skills: candidate.technical_skills ?? [], soft_skills: candidate.soft_skills ?? [],
+      languages: candidate.languages ?? [], other_skills: candidate.other_skills,
+      desired_job_type: candidate.desired_job_type, desired_industry: candidate.desired_industry,
+      desired_location: candidate.desired_location, available_start_date: candidate.available_start_date,
+      hours_per_week: candidate.hours_per_week, willing_to_travel: candidate.willing_to_travel,
+      consent_data_use: candidate.consent_data_use, consent_communication: candidate.consent_communication,
+      status: candidate.status,
+    } : emptyCandidate
+  );
+  const [saving, setSaving] = useState(false);
+  const set = <K extends keyof CandidateForm>(k: K, v: CandidateForm[K]) => setForm(f => ({ ...f, [k]: v }));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault(); setSaving(true);
+    await onSave(form); setSaving(false);
+  };
+
+  const sectionIdx = CANDIDATE_SECTIONS.findIndex(s => s.id === section);
+  const isLast = sectionIdx === CANDIDATE_SECTIONS.length - 1;
+  const isFirst = sectionIdx === 0;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between flex-shrink-0">
+          <h2 className="font-bold text-base">{candidate ? 'Edit Candidate' : 'Add Candidate'}</h2>
+          <button onClick={onClose} className="p-1.5 text-white/60 hover:text-white transition">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Section tabs */}
+        <div className="flex border-b border-gray-200 bg-gray-50 px-4 flex-shrink-0 overflow-x-auto">
+          {CANDIDATE_SECTIONS.map((s, i) => (
+            <button key={s.id} type="button" onClick={() => setSection(s.id)}
+              className={`px-4 py-3 text-xs font-semibold whitespace-nowrap border-b-2 transition ${
+                section === s.id
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}>
+              <span className={`inline-flex items-center justify-center w-4 h-4 rounded-full text-xs mr-1.5 ${
+                section === s.id ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-600'
+              }`}>{i + 1}</span>
+              {s.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Body */}
+        <form id="candidate-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
+          <div className="p-6 space-y-4">
+
+            {/* ── Personal ─────────────────────────────────────── */}
+            {section === 'personal' && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <label className={labelCls}>Full Name *</label>
+                    <input className={inputCls} required value={form.full_name}
+                      onChange={e => set('full_name', e.target.value)} placeholder="Jane Smith" />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Age *</label>
+                    <input type="number" min={16} max={90} className={inputCls} required
+                      value={form.age} onChange={e => set('age', parseInt(e.target.value) || 18)} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Status</label>
+                    <select className={inputCls} value={form.status}
+                      onChange={e => set('status', e.target.value as AppStatus)}>
+                      {(Object.keys(STATUS_CONFIG) as AppStatus[]).map(s => (
+                        <option key={s} value={s}>{STATUS_CONFIG[s].label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelCls}>Email *</label>
+                    <input type="email" className={inputCls} required value={form.email}
+                      onChange={e => set('email', e.target.value)} placeholder="jane@example.com" />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Phone *</label>
+                    <input type="tel" className={inputCls} required value={form.phone}
+                      onChange={e => set('phone', e.target.value)} placeholder="+1 555 000 0000" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className={labelCls}>Street Address</label>
+                    <input className={inputCls} value={form.address}
+                      onChange={e => set('address', e.target.value)} placeholder="123 Main St" />
+                  </div>
+                  <div>
+                    <label className={labelCls}>City</label>
+                    <input className={inputCls} value={form.city}
+                      onChange={e => set('city', e.target.value)} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>State</label>
+                    <input className={inputCls} value={form.state}
+                      onChange={e => set('state', e.target.value)} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>ZIP / Postal Code</label>
+                    <input className={inputCls} value={form.zip}
+                      onChange={e => set('zip', e.target.value)} />
+                  </div>
+                </div>
+                <div className="pt-2 border-t border-gray-100">
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Emergency Contact</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelCls}>Name</label>
+                      <input className={inputCls} value={form.emergency_contact_name}
+                        onChange={e => set('emergency_contact_name', e.target.value)} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Relation</label>
+                      <input className={inputCls} value={form.emergency_contact_relation}
+                        onChange={e => set('emergency_contact_relation', e.target.value)}
+                        placeholder="e.g. Spouse, Parent" />
+                    </div>
+                    <div className="col-span-2">
+                      <label className={labelCls}>Phone</label>
+                      <input type="tel" className={inputCls} value={form.emergency_contact_phone}
+                        onChange={e => set('emergency_contact_phone', e.target.value)} />
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ── Employment ───────────────────────────────────── */}
+            {section === 'employment' && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={labelCls}>Employment Status</label>
+                  <select className={inputCls} value={form.employment_status}
+                    onChange={e => set('employment_status', e.target.value)}>
+                    {['Employed', 'Unemployed', 'Self-employed', 'Student', 'Retired', 'Other'].map(v => (
+                      <option key={v} value={v.toLowerCase()}>{v}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelCls}>Years of Experience</label>
+                  <input type="number" min={0} max={60} className={inputCls}
+                    value={form.years_experience ?? ''}
+                    onChange={e => set('years_experience', e.target.value ? parseInt(e.target.value) : null)}
+                    placeholder="0" />
+                </div>
+                <div>
+                  <label className={labelCls}>Last Employer</label>
+                  <input className={inputCls} value={form.last_employer ?? ''}
+                    onChange={e => set('last_employer', e.target.value || null)} />
+                </div>
+                <div>
+                  <label className={labelCls}>Last Job Title</label>
+                  <input className={inputCls} value={form.last_job_title ?? ''}
+                    onChange={e => set('last_job_title', e.target.value || null)} />
+                </div>
+                <div className="col-span-2">
+                  <TagInput label="Industries" values={form.industries}
+                    onChange={v => set('industries', v)} placeholder="e.g. Healthcare, Finance" />
+                </div>
+              </div>
+            )}
+
+            {/* ── Education ────────────────────────────────────── */}
+            {section === 'education' && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={labelCls}>Highest Education</label>
+                  <select className={inputCls} value={form.highest_education}
+                    onChange={e => set('highest_education', e.target.value)}>
+                    {['Less than High School', 'High School', 'Some College', "Associate's", "Bachelor's", "Master's", 'Doctorate', 'Trade / Vocational'].map(v => (
+                      <option key={v}>{v}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelCls}>Institution</label>
+                  <input className={inputCls} value={form.institution ?? ''}
+                    onChange={e => set('institution', e.target.value || null)} />
+                </div>
+                <div>
+                  <label className={labelCls}>Field of Study</label>
+                  <input className={inputCls} value={form.field_of_study ?? ''}
+                    onChange={e => set('field_of_study', e.target.value || null)} />
+                </div>
+                <div>
+                  <label className={labelCls}>Certifications</label>
+                  <input className={inputCls} value={form.certifications ?? ''}
+                    onChange={e => set('certifications', e.target.value || null)}
+                    placeholder="e.g. PMP, AWS, SHRM" />
+                </div>
+              </div>
+            )}
+
+            {/* ── Skills ───────────────────────────────────────── */}
+            {section === 'skills' && (
+              <div className="space-y-4">
+                <TagInput label="Technical Skills" values={form.technical_skills}
+                  onChange={v => set('technical_skills', v)} placeholder="e.g. Python, Excel, SAP" />
+                <TagInput label="Soft Skills" values={form.soft_skills}
+                  onChange={v => set('soft_skills', v)} placeholder="e.g. Leadership, Communication" />
+                <TagInput label="Languages" values={form.languages}
+                  onChange={v => set('languages', v)} placeholder="e.g. English, Spanish" />
+                <div>
+                  <label className={labelCls}>Other Skills / Notes</label>
+                  <textarea className={inputCls + ' resize-none'} rows={3}
+                    value={form.other_skills ?? ''}
+                    onChange={e => set('other_skills', e.target.value || null)} />
+                </div>
+              </div>
+            )}
+
+            {/* ── Preferences ──────────────────────────────────── */}
+            {section === 'preferences' && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={labelCls}>Desired Job Type</label>
+                  <select className={inputCls} value={form.desired_job_type}
+                    onChange={e => set('desired_job_type', e.target.value)}>
+                    {['Full-time', 'Part-time', 'Contract', 'Internship', 'Temporary', 'Freelance'].map(v => (
+                      <option key={v}>{v}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelCls}>Desired Industry</label>
+                  <input className={inputCls} value={form.desired_industry}
+                    onChange={e => set('desired_industry', e.target.value)} />
+                </div>
+                <div>
+                  <label className={labelCls}>Preferred Location</label>
+                  <input className={inputCls} value={form.desired_location}
+                    onChange={e => set('desired_location', e.target.value)}
+                    placeholder="e.g. New York, Remote" />
+                </div>
+                <div>
+                  <label className={labelCls}>Available From</label>
+                  <input type="date" className={inputCls} value={form.available_start_date}
+                    onChange={e => set('available_start_date', e.target.value)} />
+                </div>
+                <div>
+                  <label className={labelCls}>Hours per Week</label>
+                  <select className={inputCls} value={form.hours_per_week}
+                    onChange={e => set('hours_per_week', e.target.value)}>
+                    {['40', '32', '24', '20', '16', '10', 'Flexible'].map(v => (
+                      <option key={v} value={v}>{v === '40' ? '40 (Full-time)' : v === 'Flexible' ? 'Flexible' : `${v} hrs`}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-center gap-3 mt-5">
+                  <input type="checkbox" id="travel" checked={form.willing_to_travel}
+                    onChange={e => set('willing_to_travel', e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600" />
+                  <label htmlFor="travel" className="text-sm text-gray-700">Willing to travel</label>
+                </div>
+              </div>
+            )}
+          </div>
+        </form>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-gray-100 flex items-center gap-3 flex-shrink-0">
+          <div className="flex gap-1.5 flex-1">
+            {CANDIDATE_SECTIONS.map((s, i) => (
+              <div key={s.id} className={`h-1.5 flex-1 rounded-full transition ${
+                i <= sectionIdx ? 'bg-blue-500' : 'bg-gray-200'}`} />
+            ))}
+          </div>
+          <div className="flex gap-2 flex-shrink-0">
+            {!isFirst && (
+              <button type="button"
+                onClick={() => setSection(CANDIDATE_SECTIONS[sectionIdx - 1].id)}
+                className="px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                Back
+              </button>
+            )}
+            {isFirst && (
+              <button type="button" onClick={onClose}
+                className="px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                Cancel
+              </button>
+            )}
+            {!isLast ? (
+              <button type="button"
+                onClick={() => setSection(CANDIDATE_SECTIONS[sectionIdx + 1].id)}
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl text-sm transition">
+                Next
+              </button>
+            ) : (
+              <button type="submit" form="candidate-form" disabled={saving}
+                className="flex items-center gap-2 px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl text-sm transition disabled:opacity-60">
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {saving ? 'Saving…' : candidate ? 'Save Changes' : 'Add Candidate'}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Candidates Tab ────────────────────────────────────────────────────────────
-function CandidatesTab({ apps, loading, refreshing, onRefresh, onSelect, onStatusChange }: {
+function CandidatesTab({ apps, loading, refreshing, onRefresh, onSelect, onStatusChange, onAdd, onEdit, onDelete }: {
   apps: Application[]; loading: boolean; refreshing: boolean;
   onRefresh: () => void; onSelect: (a: Application) => void;
   onStatusChange: (id: string, s: AppStatus) => void;
+  onAdd: () => void; onEdit: (a: Application) => void; onDelete: (id: string) => void;
 }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<AppStatus | 'all'>('all');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const filtered = apps.filter(a => {
     const matchSearch = !search || [a.full_name, a.email, a.city, a.desired_industry, a.employment_status]
       .some(v => v?.toLowerCase().includes(search.toLowerCase()));
     return matchSearch && (statusFilter === 'all' || a.status === statusFilter);
   });
+
+  const handleDelete = async (app: Application) => {
+    if (!confirm(`Delete ${app.full_name}? This cannot be undone.`)) return;
+    setDeletingId(app.id);
+    await onDelete(app.id);
+    setDeletingId(null);
+  };
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
@@ -627,6 +1026,10 @@ function CandidatesTab({ apps, loading, refreshing, onRefresh, onSelect, onStatu
             className="p-2 border border-gray-200 rounded-lg text-gray-500 hover:text-blue-600 hover:border-blue-300 transition disabled:opacity-50">
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           </button>
+          <button onClick={onAdd}
+            className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-lg transition">
+            <Plus className="w-4 h-4" />Add Candidate
+          </button>
         </div>
       </div>
 
@@ -635,7 +1038,14 @@ function CandidatesTab({ apps, loading, refreshing, onRefresh, onSelect, onStatu
       ) : filtered.length === 0 ? (
         <div className="text-center py-20">
           <Users className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-          <p className="text-gray-400 font-medium">{search || statusFilter !== 'all' ? 'No matching candidates' : 'No candidates yet'}</p>
+          <p className="text-gray-400 font-medium mb-3">
+            {search || statusFilter !== 'all' ? 'No matching candidates' : 'No candidates yet'}
+          </p>
+          {!search && statusFilter === 'all' && (
+            <button onClick={onAdd} className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+              Add your first candidate
+            </button>
+          )}
         </div>
       ) : (
         <div className="overflow-x-auto">
@@ -678,10 +1088,25 @@ function CandidatesTab({ apps, loading, refreshing, onRefresh, onSelect, onStatu
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap"><StatusBadge status={app.status} /></td>
                   <td className="px-4 py-3">
-                    <button onClick={() => onSelect(app)}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg transition border border-slate-200 whitespace-nowrap">
-                      <Eye className="w-3.5 h-3.5" />View
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => onSelect(app)}
+                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                        title="View details">
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => onEdit(app)}
+                        className="p-1.5 text-gray-400 hover:text-slate-700 hover:bg-slate-50 rounded-lg transition"
+                        title="Edit candidate">
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => handleDelete(app)} disabled={deletingId === app.id}
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition disabled:opacity-30"
+                        title="Delete candidate">
+                        {deletingId === app.id
+                          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          : <Trash2 className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -1155,6 +1580,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [vacancyModal, setVacancyModal] = useState<{ open: boolean; vacancy: Vacancy | null }>({ open: false, vacancy: null });
+  const [candidateModal, setCandidateModal] = useState<{ open: boolean; candidate: Application | null }>({ open: false, candidate: null });
 
   const fetchApps = useCallback(async (showSpinner = false) => {
     if (showSpinner) setRefreshing(true);
@@ -1176,6 +1602,30 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     if (!error) {
       setApps(prev => prev.map(a => a.id === id ? { ...a, status } : a));
       if (selectedApp?.id === id) setSelectedApp(prev => prev ? { ...prev, status } : prev);
+    }
+  };
+
+  const saveCandidate = async (form: CandidateForm) => {
+    if (candidateModal.candidate) {
+      const { error } = await supabase.from('training_applications').update(form).eq('id', candidateModal.candidate.id);
+      if (!error) {
+        setApps(prev => prev.map(a => a.id === candidateModal.candidate!.id ? { ...a, ...form } : a));
+        if (selectedApp?.id === candidateModal.candidate.id) setSelectedApp(prev => prev ? { ...prev, ...form } : prev);
+      }
+    } else {
+      const { data, error } = await supabase.from('training_applications').insert({
+        ...form, cv_file_url: null, cv_file_name: null,
+      }).select().single();
+      if (!error && data) setApps(prev => [data as Application, ...prev]);
+    }
+    setCandidateModal({ open: false, candidate: null });
+  };
+
+  const deleteCandidate = async (id: string) => {
+    const { error } = await supabase.from('training_applications').delete().eq('id', id);
+    if (!error) {
+      setApps(prev => prev.filter(a => a.id !== id));
+      if (selectedApp?.id === id) setSelectedApp(null);
     }
   };
 
@@ -1254,7 +1704,10 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
         {tab === 'overview' && <OverviewTab apps={apps} vacancies={vacancies} />}
         {tab === 'candidates' && (
           <CandidatesTab apps={apps} loading={loadingApps} refreshing={refreshing}
-            onRefresh={() => fetchApps(true)} onSelect={setSelectedApp} onStatusChange={updateAppStatus} />
+            onRefresh={() => fetchApps(true)} onSelect={setSelectedApp} onStatusChange={updateAppStatus}
+            onAdd={() => setCandidateModal({ open: true, candidate: null })}
+            onEdit={a => setCandidateModal({ open: true, candidate: a })}
+            onDelete={deleteCandidate} />
         )}
         {tab === 'vacancies' && (
           <VacanciesTab vacancies={vacancies} loading={loadingVacancies}
@@ -1268,6 +1721,9 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
 
       {selectedApp && (
         <AppDetailModal app={selectedApp} onClose={() => setSelectedApp(null)} onStatusChange={updateAppStatus} />
+      )}
+      {candidateModal.open && (
+        <CandidateModal candidate={candidateModal.candidate} onClose={() => setCandidateModal({ open: false, candidate: null })} onSave={saveCandidate} />
       )}
       {vacancyModal.open && (
         <VacancyModal vacancy={vacancyModal.vacancy} onClose={() => setVacancyModal({ open: false, vacancy: null })} onSave={saveVacancy} />

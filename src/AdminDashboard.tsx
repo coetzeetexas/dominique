@@ -2089,9 +2089,13 @@ function DigitalMarketingTab({ apps, user }: { apps: Application[]; user: User }
         sent_by: user.email ?? 'admin',
         status: result.failed === 0 ? 'sent' : 'partial',
       });
-      setSendResult(result);
-      setSelected(new Set());
-      fetchCampaigns();
+      if (result.failed > 0 && result.errors?.length) {
+        setSendError(`Sent: ${result.sent}, Failed: ${result.failed}. Error: ${result.errors[0]}`);
+      } else {
+        setSendResult(result);
+        setSelected(new Set());
+        fetchCampaigns();
+      }
     } catch (e) {
       setSendError(e instanceof Error ? e.message : 'Unknown error');
     } finally {

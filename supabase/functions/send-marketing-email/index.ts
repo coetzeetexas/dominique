@@ -7,6 +7,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
+const SMTP_USER = "korixllc@gmail.com";
+const SMTP_PASS = Deno.env.get("GMAIL_APP_PASSWORD") ?? "Winter=23*";
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -21,14 +24,6 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const gmailPassword = Deno.env.get("GMAIL_APP_PASSWORD");
-    if (!gmailPassword) {
-      return new Response(
-        JSON.stringify({ error: "Email service not configured. Please add GMAIL_APP_PASSWORD to your edge function secrets." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const { subject, htmlBody, recipients } = await req.json();
 
     if (!subject || !htmlBody || !Array.isArray(recipients) || recipients.length === 0) {
@@ -38,21 +33,35 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const transporter = nodemailer.createTransport({
+    // Try SSL (port 465) first, fall back to TLS (port 587) on failure
+    let transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
       port: 465,
       secure: true,
-      auth: {
-        user: "konixllc@gmail.com",
-        pass: gmailPassword,
-      },
+      auth: { user: SMTP_USER, pass: SMTP_PASS },
+      tls: { rejectUnauthorized: false },
     });
+
+    // Verify connection
+    try {
+      await transporter.verify();
+    } catch (_sslErr) {
+      // Fall back to TLS port 587
+      transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com",
+        port: 587,
+        secure: false,
+        auth: { user: SMTP_USER, pass: SMTP_PASS },
+        tls: { rejectUnauthorized: false },
+      });
+      await transporter.verify();
+    }
 
     const results = await Promise.allSettled(
       recipients.map((r: { name: string; email: string }) => {
         const personalizedHtml = htmlBody.replace(/\{\{name\}\}/g, r.name);
         return transporter.sendMail({
-          from: '"KORIX LLC" <konixllc@gmail.com>',
+          from: `"KORIX LLC" <${SMTP_USER}>`,
           to: `${r.name} <${r.email}>`,
           subject,
           html: personalizedHtml,
@@ -62,9 +71,12 @@ Deno.serve(async (req: Request) => {
 
     const sent = results.filter((r) => r.status === "fulfilled").length;
     const failed = results.filter((r) => r.status === "rejected").length;
+    const errors = results
+      .filter((r): r is PromiseRejectedResult => r.status === "rejected")
+      .map((r) => String(r.reason));
 
     return new Response(
-      JSON.stringify({ sent, failed }),
+      JSON.stringify({ sent, failed, errors }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {

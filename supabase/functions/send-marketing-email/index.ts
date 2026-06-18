@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 const SMTP_USER = "korixllc@gmail.com";
-const SMTP_PASS = Deno.env.get("GMAIL_APP_PASSWORD") ?? "lakqpjntelasqcw";
+const SMTP_PASS = Deno.env.get("GMAIL_APP_PASSWORD") ?? "lakqpjnrtelasqcw";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {

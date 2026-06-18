@@ -7,14 +7,17 @@ import {
   ArrowLeft, Download, Filter, RefreshCw, FileText, Phone, Mail, MapPin,
   Briefcase, GraduationCap, Calendar, Zap, Target, AlertCircle, Loader2,
   Shield, TrendingUp, UserCheck, Plus, Trash2, LayoutDashboard, Settings,
-  Building2, Edit2, Save, Tag, ChevronRight,
+  Building2, Edit2, Save, Tag, ChevronRight, Send, Megaphone, History,
+  Bold, Italic, Underline, Strikethrough, List, ListOrdered, Link, Minus,
+  AlignLeft, AlignCenter, AlignRight, Type, Eraser, CheckSquare, Square,
+  UserPlus, Globe,
 } from 'lucide-react';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Props { onBack: () => void; }
 
 type AppStatus = 'pending' | 'reviewing' | 'approved' | 'rejected' | 'interviewing';
-type Tab = 'overview' | 'candidates' | 'vacancies' | 'settings';
+type Tab = 'overview' | 'candidates' | 'vacancies' | 'mailer' | 'settings';
 type VacancyStatus = 'open' | 'closed' | 'on_hold';
 
 interface Application {
@@ -40,7 +43,12 @@ interface Vacancy {
 }
 
 
-// ── Status Config ─────────────────────────────────────────────────────────────
+interface Campaign {
+  id: string; created_at: string; subject: string; body: string;
+  recipient_count: number; sent_by: string; status: string;
+}
+
+
 const STATUS_CONFIG: Record<AppStatus, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
   pending:      { label: 'Pending',      color: 'text-amber-700',  bg: 'bg-amber-50 border-amber-200',  icon: <Clock className="w-3.5 h-3.5" /> },
   reviewing:    { label: 'Reviewing',    color: 'text-blue-700',   bg: 'bg-blue-50 border-blue-200',    icon: <Eye className="w-3.5 h-3.5" /> },
@@ -1979,7 +1987,437 @@ function SettingsTab({ user, onLogout }: { user: User; onLogout: () => void }) {
     </div>
   );
 }
-// ── Main Dashboard Shell ──────────────────────────────────────────────────────
+// ── Rich Text Editor (WP Classic Editor style) ────────────────────────────────
+function RichTextEditor({ value, onChange }: { value: string; onChange: (html: string) => void }) {
+  const editorRef = useRef<HTMLDivElement>(null);
+  const initialised = useRef(false);
+
+  useEffect(() => {
+    if (editorRef.current && !initialised.current) {
+      editorRef.current.innerHTML = value;
+      initialised.current = true;
+    }
+  }, [value]);
+
+  const exec = (cmd: string, val?: string) => {
+    editorRef.current?.focus();
+    document.execCommand(cmd, false, val ?? undefined);
+    onChange(editorRef.current?.innerHTML ?? '');
+  };
+
+  const insertLink = () => {
+    const url = prompt('Enter URL (include https://):');
+    if (url) exec('createLink', url);
+  };
+
+  const handleInput = () => onChange(editorRef.current?.innerHTML ?? '');
+
+  const ToolBtn = ({ onClick, title, children, active }: {
+    onClick: () => void; title: string; children: React.ReactNode; active?: boolean;
+  }) => (
+    <button type="button" title={title} onMouseDown={e => { e.preventDefault(); onClick(); }}
+      className={`p-1.5 rounded text-gray-700 hover:bg-gray-200 transition-colors ${active ? 'bg-gray-200' : ''}`}>
+      {children}
+    </button>
+  );
+
+  const Divider = () => <div className="w-px h-5 bg-gray-300 mx-0.5 self-center" />;
+
+  return (
+    <div className="border border-gray-300 rounded-lg overflow-hidden bg-white">
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 bg-gray-100 border-b border-gray-300">
+        {/* Text format */}
+        <ToolBtn onClick={() => exec('bold')} title="Bold"><Bold className="w-3.5 h-3.5" /></ToolBtn>
+        <ToolBtn onClick={() => exec('italic')} title="Italic"><Italic className="w-3.5 h-3.5" /></ToolBtn>
+        <ToolBtn onClick={() => exec('underline')} title="Underline"><Underline className="w-3.5 h-3.5" /></ToolBtn>
+        <ToolBtn onClick={() => exec('strikeThrough')} title="Strikethrough"><Strikethrough className="w-3.5 h-3.5" /></ToolBtn>
+        <Divider />
+        {/* Block format */}
+        <select onMouseDown={e => e.stopPropagation()}
+          onChange={e => { exec('formatBlock', e.target.value); e.target.value = ''; }}
+          defaultValue=""
+          className="text-xs border border-gray-300 rounded px-1.5 py-1 bg-white text-gray-700 focus:outline-none">
+          <option value="" disabled>Style</option>
+          <option value="p">Paragraph</option>
+          <option value="h1">Heading 1</option>
+          <option value="h2">Heading 2</option>
+          <option value="h3">Heading 3</option>
+          <option value="blockquote">Quote</option>
+          <option value="pre">Code</option>
+        </select>
+        <Divider />
+        {/* Alignment */}
+        <ToolBtn onClick={() => exec('justifyLeft')} title="Align Left"><AlignLeft className="w-3.5 h-3.5" /></ToolBtn>
+        <ToolBtn onClick={() => exec('justifyCenter')} title="Align Center"><AlignCenter className="w-3.5 h-3.5" /></ToolBtn>
+        <ToolBtn onClick={() => exec('justifyRight')} title="Align Right"><AlignRight className="w-3.5 h-3.5" /></ToolBtn>
+        <Divider />
+        {/* Lists */}
+        <ToolBtn onClick={() => exec('insertUnorderedList')} title="Bullet List"><List className="w-3.5 h-3.5" /></ToolBtn>
+        <ToolBtn onClick={() => exec('insertOrderedList')} title="Numbered List"><ListOrdered className="w-3.5 h-3.5" /></ToolBtn>
+        <Divider />
+        {/* Insert */}
+        <ToolBtn onClick={insertLink} title="Insert Link"><Link className="w-3.5 h-3.5" /></ToolBtn>
+        <ToolBtn onClick={() => exec('insertHorizontalRule')} title="Horizontal Rule"><Minus className="w-3.5 h-3.5" /></ToolBtn>
+        <ToolBtn onClick={() => exec('removeFormat')} title="Clear Formatting"><Eraser className="w-3.5 h-3.5" /></ToolBtn>
+        <Divider />
+        {/* Indent */}
+        <ToolBtn onClick={() => exec('indent')} title="Indent"><Type className="w-3.5 h-3.5" /></ToolBtn>
+        <ToolBtn onClick={() => exec('outdent')} title="Outdent"><Type className="w-3.5 h-3.5 rotate-180" /></ToolBtn>
+      </div>
+      {/* Editable area */}
+      <div
+        ref={editorRef}
+        contentEditable
+        suppressContentEditableWarning
+        onInput={handleInput}
+        className="min-h-64 p-4 text-sm text-gray-900 focus:outline-none overflow-y-auto"
+        style={{ lineHeight: '1.7', maxHeight: 420 }}
+      />
+    </div>
+  );
+}
+
+// ── Mailer Tab ────────────────────────────────────────────────────────────────
+type MailerMode = 'candidates' | 'newsletter';
+
+function MailerTab({ apps, user }: { apps: Application[]; user: User }) {
+  const [mode, setMode] = useState<MailerMode>('candidates');
+  // Candidate mode
+  const [search, setSearch] = useState('');
+  const [consentOnly, setConsentOnly] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<AppStatus | 'all'>('all');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  // Newsletter mode
+  const [customEmails, setCustomEmails] = useState('');
+  // Composer
+  const [subject, setSubject] = useState('');
+  const [body, setBody] = useState('<p>Dear {{name}},</p><p></p><p>Best regards,<br/><strong>KORIX LLC Recruitment Team</strong></p>');
+  const [sending, setSending] = useState(false);
+  const [sendResult, setSendResult] = useState<{ sent: number; failed: number } | null>(null);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [preview, setPreview] = useState(false);
+  // History
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [historyTab, setHistoryTab] = useState(false);
+
+  const fetchHistory = useCallback(async () => {
+    const { data } = await supabase.from('marketing_campaigns').select('*').order('created_at', { ascending: false }).limit(30);
+    if (data) setCampaigns(data as Campaign[]);
+    setLoadingHistory(false);
+  }, []);
+
+  useEffect(() => { fetchHistory(); }, [fetchHistory]);
+
+  const filtered = useMemo(() => apps.filter(a => {
+    if (consentOnly && !a.consent_communication) return false;
+    if (statusFilter !== 'all' && a.status !== statusFilter) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      if (!a.full_name.toLowerCase().includes(q) && !a.email.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  }), [apps, consentOnly, statusFilter, search]);
+
+  const allSelected = filtered.length > 0 && filtered.every(a => selected.has(a.id));
+  const toggleAll = () => {
+    if (allSelected) setSelected(prev => { const s = new Set(prev); filtered.forEach(a => s.delete(a.id)); return s; });
+    else setSelected(prev => { const s = new Set(prev); filtered.forEach(a => s.add(a.id)); return s; });
+  };
+  const toggleOne = (id: string) => setSelected(prev => {
+    const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s;
+  });
+
+  const candidateRecipients = apps.filter(a => selected.has(a.id)).map(a => ({ name: a.full_name, email: a.email }));
+
+  const newsletterRecipients = customEmails
+    .split(/[\n,;]+/)
+    .map(s => s.trim())
+    .filter(s => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s))
+    .map(email => ({ name: '', email }));
+
+  const recipients = mode === 'candidates' ? candidateRecipients : newsletterRecipients;
+
+  const handleSend = async () => {
+    if (!recipients.length || !subject.trim() || !body.trim()) return;
+    setSending(true); setSendResult(null); setSendError(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+      const resp = await fetch(`${supabaseUrl}/functions/v1/send-marketing-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ subject, htmlBody: body, recipients }),
+      });
+      const result = await resp.json();
+      if (!resp.ok) throw new Error(result.error || 'Send failed');
+      await supabase.from('marketing_campaigns').insert({
+        subject, body, recipient_count: recipients.length,
+        sent_by: user.email ?? 'admin',
+        status: result.failed === 0 ? 'sent' : 'partial',
+      });
+      setSendResult(result);
+      setSelected(new Set());
+      fetchHistory();
+    } catch (e) {
+      setSendError(e instanceof Error ? e.message : 'Unknown error');
+    } finally { setSending(false); }
+  };
+
+  const previewHtml = body.replace(/\{\{name\}\}/g, recipients[0]?.name || 'Candidate');
+
+  return (
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <Megaphone className="w-5 h-5 text-blue-600" />
+            Mailer
+          </h2>
+          <p className="text-sm text-gray-500 mt-0.5">Compose and send emails to candidates or newsletter subscribers from admin@korixllc.com</p>
+        </div>
+        <button onClick={() => setHistoryTab(v => !v)}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border transition ${historyTab ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'}`}>
+          <History className="w-4 h-4" />
+          History {campaigns.length > 0 && `(${campaigns.length})`}
+        </button>
+      </div>
+
+      {historyTab ? (
+        /* ── Campaign History ── */
+        <div className="bg-white rounded-xl border border-gray-200">
+          <div className="p-4 border-b border-gray-100">
+            <h3 className="font-semibold text-gray-900 text-sm">Sent Campaigns</h3>
+          </div>
+          {loadingHistory ? (
+            <div className="p-10 text-center"><Loader2 className="w-5 h-5 animate-spin text-gray-400 mx-auto" /></div>
+          ) : campaigns.length === 0 ? (
+            <div className="p-10 text-center text-sm text-gray-400">No campaigns sent yet</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Date</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Subject</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Recipients</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Sent By</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {campaigns.map(c => (
+                    <tr key={c.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
+                        {new Date(c.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </td>
+                      <td className="px-4 py-3 text-gray-900 font-medium max-w-xs truncate">{c.subject}</td>
+                      <td className="px-4 py-3 text-gray-600">{c.recipient_count}</td>
+                      <td className="px-4 py-3 text-gray-500 max-w-[160px] truncate">{c.sent_by}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                          c.status === 'sent' ? 'bg-green-50 text-green-700 border border-green-200' :
+                          c.status === 'partial' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                          'bg-red-50 text-red-700 border border-red-200'
+                        }`}>
+                          {c.status.charAt(0).toUpperCase() + c.status.slice(1)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* ── Composer ── */
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+          {/* Left: Recipients */}
+          <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden">
+            {/* Mode toggle */}
+            <div className="flex border-b border-gray-100">
+              <button onClick={() => setMode('candidates')}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium border-b-2 transition ${mode === 'candidates' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+                <UserPlus className="w-4 h-4" />Candidates
+              </button>
+              <button onClick={() => setMode('newsletter')}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium border-b-2 transition ${mode === 'newsletter' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+                <Globe className="w-4 h-4" />Newsletter
+              </button>
+            </div>
+
+            {mode === 'candidates' ? (
+              <>
+                <div className="p-3 border-b border-gray-100 space-y-2">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                    <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+                      placeholder="Search name or email…"
+                      className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  </div>
+                  <div className="flex gap-2">
+                    <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as AppStatus | 'all')}
+                      className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <option value="all">All statuses</option>
+                      {(Object.keys(STATUS_CONFIG) as AppStatus[]).map(s => (
+                        <option key={s} value={s}>{STATUS_CONFIG[s].label}</option>
+                      ))}
+                    </select>
+                    <button onClick={() => setConsentOnly(!consentOnly)}
+                      className={`flex items-center gap-1 px-2.5 py-1.5 text-xs rounded-lg border transition ${consentOnly ? 'bg-green-50 border-green-300 text-green-700' : 'bg-gray-50 border-gray-200 text-gray-600'}`}>
+                      <Shield className="w-3 h-3" />{consentOnly ? 'Consented' : 'All'}
+                    </button>
+                  </div>
+                </div>
+                <div className="px-3 py-2 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+                  <button onClick={toggleAll} className="flex items-center gap-1.5 text-xs font-medium text-gray-700 hover:text-blue-600 transition">
+                    {allSelected ? <CheckSquare className="w-3.5 h-3.5 text-blue-600" /> : <Square className="w-3.5 h-3.5 text-gray-400" />}
+                    {allSelected ? 'Deselect all' : 'Select all'} ({filtered.length})
+                  </button>
+                  {selected.size > 0 && (
+                    <span className="text-xs font-semibold text-blue-600">{selected.size} selected</span>
+                  )}
+                </div>
+                <div className="overflow-y-auto divide-y divide-gray-50 flex-1" style={{ maxHeight: 360 }}>
+                  {filtered.length === 0 ? (
+                    <div className="p-8 text-center text-sm text-gray-400">No candidates match filters</div>
+                  ) : filtered.map(a => {
+                    const sc = STATUS_CONFIG[a.status as AppStatus] ?? STATUS_CONFIG.pending;
+                    const isChecked = selected.has(a.id);
+                    return (
+                      <button key={a.id} onClick={() => toggleOne(a.id)}
+                        className={`w-full px-3 py-2.5 flex items-center gap-2.5 text-left hover:bg-gray-50 transition ${isChecked ? 'bg-blue-50' : ''}`}>
+                        {isChecked ? <CheckSquare className="w-4 h-4 text-blue-600 shrink-0" /> : <Square className="w-4 h-4 text-gray-300 shrink-0" />}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900 truncate">{a.full_name}</div>
+                          <div className="text-xs text-gray-500 truncate">{a.email}</div>
+                        </div>
+                        <span className={`shrink-0 px-1.5 py-0.5 rounded text-xs font-medium border ${sc.bg} ${sc.color}`}>{sc.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <div className="p-4 flex flex-col gap-3 flex-1">
+                <p className="text-xs text-gray-500">Enter email addresses separated by commas, semicolons, or new lines.</p>
+                <textarea
+                  value={customEmails}
+                  onChange={e => setCustomEmails(e.target.value)}
+                  rows={12}
+                  placeholder={"newsletter@example.com\njohn@example.com, jane@example.com"}
+                  className="flex-1 w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono resize-none"
+                />
+                {newsletterRecipients.length > 0 && (
+                  <div className="text-xs text-blue-600 font-medium">{newsletterRecipients.length} valid recipient{newsletterRecipients.length !== 1 ? 's' : ''} detected</div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Right: Composer */}
+          <div className="lg:col-span-3 bg-white rounded-xl border border-gray-200 flex flex-col">
+            <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-gray-900 text-sm">Compose Email</h3>
+                <p className="text-xs text-gray-500 mt-0.5">From: <span className="font-medium text-gray-700">admin@korixllc.com</span></p>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-blue-600">{recipients.length}</div>
+                <div className="text-xs text-blue-500">recipient{recipients.length !== 1 ? 's' : ''}</div>
+              </div>
+            </div>
+
+            <div className="p-4 flex flex-col gap-4 flex-1">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Subject</label>
+                <input type="text" value={subject} onChange={e => setSubject(e.target.value)}
+                  placeholder="Email subject…"
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-medium text-gray-600">Message</label>
+                  {mode === 'candidates' && (
+                    <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded font-mono">
+                      {'{{name}}'} = personalised name
+                    </span>
+                  )}
+                </div>
+                <RichTextEditor value={body} onChange={setBody} />
+              </div>
+
+              {sendResult && (
+                <div className={`rounded-lg px-4 py-3 text-sm flex items-center gap-2 ${sendResult.failed === 0 ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-amber-50 border border-amber-200 text-amber-700'}`}>
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  {sendResult.failed === 0
+                    ? `${sendResult.sent} email${sendResult.sent !== 1 ? 's' : ''} sent successfully from admin@korixllc.com`
+                    : `Sent: ${sendResult.sent}, Failed: ${sendResult.failed}`}
+                </div>
+              )}
+              {sendError && (
+                <div className="rounded-lg px-4 py-3 text-sm flex items-center gap-2 bg-red-50 border border-red-200 text-red-700">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  {sendError}
+                </div>
+              )}
+
+              <div className="flex items-center gap-3 pt-1">
+                <button onClick={() => setPreview(true)}
+                  disabled={!subject || !body || recipients.length === 0}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition disabled:opacity-40 disabled:cursor-not-allowed">
+                  <Eye className="w-4 h-4" />Preview
+                </button>
+                <button onClick={handleSend}
+                  disabled={sending || recipients.length === 0 || !subject.trim() || !body.trim()}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-40 disabled:cursor-not-allowed">
+                  {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  {sending ? 'Sending…' : `Send to ${recipients.length} Recipient${recipients.length !== 1 ? 's' : ''}`}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Preview Modal */}
+      {preview && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setPreview(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b border-gray-100">
+              <div>
+                <p className="text-xs text-gray-500 mb-0.5">From: <strong>admin@korixllc.com</strong> · Preview for: <strong>{recipients[0]?.name || recipients[0]?.email || '—'}</strong></p>
+                <p className="font-semibold text-gray-900">{subject}</p>
+              </div>
+              <button onClick={() => setPreview(false)} className="p-2 rounded-lg hover:bg-gray-100 transition">
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            <div className="overflow-y-auto p-6 flex-1 text-sm leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: previewHtml }} />
+            <div className="p-4 border-t border-gray-100 flex justify-end gap-3">
+              <button onClick={() => setPreview(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-100 transition">
+                Close
+              </button>
+              <button onClick={() => { setPreview(false); handleSend(); }}
+                disabled={sending || recipients.length === 0}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-40">
+                <Send className="w-4 h-4" />Send Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [tab, setTab] = useState<Tab>('overview');
   const [apps, setApps] = useState<Application[]>([]);
@@ -2063,6 +2501,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
     { id: 'overview',   label: 'Overview',   icon: <LayoutDashboard className="w-4 h-4" /> },
     { id: 'candidates', label: 'Candidates', icon: <Users className="w-4 h-4" /> },
     { id: 'vacancies',  label: 'Vacancies',  icon: <Briefcase className="w-4 h-4" /> },
+    { id: 'mailer',     label: 'Mailer',     icon: <Megaphone className="w-4 h-4" /> },
     { id: 'settings',   label: 'Settings',   icon: <Settings className="w-4 h-4" /> },
   ];
 
@@ -2125,6 +2564,7 @@ function Dashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
             onDelete={deleteVacancy}
             onStatusChange={updateVacancyStatus} />
         )}
+        {tab === 'mailer' && <MailerTab apps={apps} user={user} />}
         {tab === 'settings' && <SettingsTab user={user} onLogout={onLogout} />}
       </main>
 

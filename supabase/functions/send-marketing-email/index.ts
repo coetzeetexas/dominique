@@ -7,8 +7,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-const SMTP_USER = "coetzee.texas@gmail.com";
-const SMTP_PASS = Deno.env.get("GMAIL_APP_PASSWORD") ?? "lakqpjnrtelasqcw";
+const SMTP_HOST = "mail.privateemail.com";
+const SMTP_USER = Deno.env.get("SMTP_USER") ?? "admin@korixllc.com";
+const SMTP_PASS = Deno.env.get("SMTP_PASS") ?? "Titch0606*";
+const FROM_NAME = "KORIX LLC";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -33,22 +35,20 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Try SSL (port 465) first, fall back to TLS (port 587) on failure
+    // Try SSL port 465 first, fall back to STARTTLS 587
     let transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
+      host: SMTP_HOST,
       port: 465,
       secure: true,
       auth: { user: SMTP_USER, pass: SMTP_PASS },
       tls: { rejectUnauthorized: false },
     });
 
-    // Verify connection
     try {
       await transporter.verify();
     } catch (_sslErr) {
-      // Fall back to TLS port 587
       transporter = nodemailer.createTransport({
-        host: "smtp.gmail.com",
+        host: SMTP_HOST,
         port: 587,
         secure: false,
         auth: { user: SMTP_USER, pass: SMTP_PASS },
@@ -61,8 +61,8 @@ Deno.serve(async (req: Request) => {
       recipients.map((r: { name: string; email: string }) => {
         const personalizedHtml = htmlBody.replace(/\{\{name\}\}/g, r.name);
         return transporter.sendMail({
-          from: `"KORIX LLC" <${SMTP_USER}>`,
-          to: `${r.name} <${r.email}>`,
+          from: `"${FROM_NAME}" <${SMTP_USER}>`,
+          to: r.name ? `${r.name} <${r.email}>` : r.email,
           subject,
           html: personalizedHtml,
         });

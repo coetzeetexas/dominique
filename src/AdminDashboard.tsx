@@ -1692,22 +1692,15 @@ function UserModal({ mode, user: editUser, currentUserId, onClose, onSave }: {
     e.preventDefault();
     setError(''); setSaving(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-      const body = mode === 'add'
+      const payload = mode === 'add'
         ? { action: 'create', email, password }
         : { action: 'update', id: editUser!.id, email, password: password || undefined };
 
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/user-management`,
-        {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        }
-      );
-      const json = res.headers.get('content-type')?.includes('json') ? await res.json() : {};
-      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+      const { data: json, error: fnError } = await supabase.functions.invoke('user-management', { body: payload });
+      if (fnError) throw new Error(fnError.message);
+      if (json?.error) throw new Error(json.error);
+      if (fnError) throw new Error(fnError.message);
+      if (json?.error) throw new Error(json.error);
       onSave();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed');
@@ -1794,17 +1787,9 @@ function UserManagementCard({ currentUser }: { currentUser: User }) {
   const fetchUsers = useCallback(async () => {
     setLoading(true); setError('');
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/user-management`,
-        {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'list' }),
-        }
-      );
-      const json = res.headers.get('content-type')?.includes('json') ? await res.json() : {};
-      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+      const { data: json, error: fnError } = await supabase.functions.invoke('user-management', { body: { action: 'list' } });
+      if (fnError) throw new Error(fnError.message);
+      if (json?.error) throw new Error(json.error);
       setUsers(json.data as AdminUser[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load users');
@@ -1819,17 +1804,9 @@ function UserManagementCard({ currentUser }: { currentUser: User }) {
     if (!confirm(`Delete ${u.email}? This cannot be undone.`)) return;
     setDeletingId(u.id);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/user-management`,
-        {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'delete', id: u.id }),
-        }
-      );
-      const json = res.headers.get('content-type')?.includes('json') ? await res.json() : {};
-      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+      const { data: json, error: fnError } = await supabase.functions.invoke('user-management', { body: { action: 'delete', id: u.id } });
+      if (fnError) throw new Error(fnError.message);
+      if (json?.error) throw new Error(json.error);
       setUsers(prev => prev.filter(x => x.id !== u.id));
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete user');
@@ -2143,16 +2120,11 @@ function MailerTab({ apps, user }: { apps: Application[]; user: User }) {
     if (!recipients.length || !subject.trim() || !body.trim()) return;
     setSending(true); setSendResult(null); setSendError(null);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-      const resp = await fetch(`${supabaseUrl}/functions/v1/send-marketing-email`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
-        body: JSON.stringify({ subject, htmlBody: body, recipients }),
+      const { data: result, error: fnError } = await supabase.functions.invoke('send-marketing-email', {
+        body: { subject, htmlBody: body, recipients },
       });
-      const text = await resp.text();
-      const result = text ? JSON.parse(text) : {};
-      if (!resp.ok) throw new Error(result.error || `HTTP ${resp.status}`);
+      if (fnError) throw new Error(fnError.message || 'Send failed');
+      if (result?.error) throw new Error(result.error);
       await supabase.from('marketing_campaigns').insert({
         subject, body, recipient_count: recipients.length,
         sent_by: user.email ?? 'admin',

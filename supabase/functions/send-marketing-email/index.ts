@@ -9,25 +9,24 @@ const corsHeaders = {
 };
 
 const SMTP_HOST = "mail.privateemail.com";
-const SMTP_USER = Deno.env.get("SMTP_USER") ?? "admin@korixllc.com";
-const SMTP_PASS = Deno.env.get("SMTP_PASS") ?? "Titch0606*";
+const SMTP_USER = Deno.env.get("SMTP_USER") ?? "";
+const SMTP_PASS = Deno.env.get("SMTP_PASS") ?? "";
 const FROM_NAME = "KORIX LLC";
 
 Deno.serve(async (req: Request) => {
-  // Always allow CORS preflight without JWT check
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 200, headers: corsHeaders });
   }
 
+  const json = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
   try {
-    // Validate caller JWT internally (verify_jwt is false so we do it here)
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    if (!authHeader) return json({ error: "Unauthorized" }, 401);
 
     const userClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -35,44 +34,25 @@ Deno.serve(async (req: Request) => {
       { global: { headers: { Authorization: authHeader } } }
     );
     const { data: { user }, error: authErr } = await userClient.auth.getUser();
-    if (authErr || !user) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    if (authErr || !user) return json({ error: "Unauthorized" }, 401);
 
     const { subject, htmlBody, recipients } = await req.json();
-
     if (!subject || !htmlBody || !Array.isArray(recipients) || recipients.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "Invalid request body" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return json({ error: "Invalid request body" }, 400);
     }
 
-    // Try SSL port 465 first, fall back to STARTTLS 587
-    let transporter = nodemailer.createTransport({
+    // Port 587 STARTTLS — most reliable in Deno/edge environments
+    const transporter = nodemailer.createTransport({
       host: SMTP_HOST,
-      port: 465,
-      secure: true,
+      port: 587,
+      secure: false,
+      requireTLS: true,
       auth: { user: SMTP_USER, pass: SMTP_PASS },
       tls: { rejectUnauthorized: false },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
     });
-
-    try {
-      await transporter.verify();
-    } catch (_sslErr) {
-      transporter = nodemailer.createTransport({
-        host: SMTP_HOST,
-        port: 587,
-        secure: false,
-        requireTLS: true,
-        auth: { user: SMTP_USER, pass: SMTP_PASS },
-        tls: { rejectUnauthorized: false },
-      });
-      await transporter.verify();
-    }
 
     const results = await Promise.allSettled(
       recipients.map((r: { name: string; email: string }) => {
@@ -92,14 +72,10 @@ Deno.serve(async (req: Request) => {
       .filter((r): r is PromiseRejectedResult => r.status === "rejected")
       .map((r) => String(r.reason));
 
-    return new Response(
-      JSON.stringify({ sent, failed, errors }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return json({ sent, failed, errors });
   } catch (err) {
-    return new Response(
-      JSON.stringify({ error: String(err) }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("send-marketing-email error:", message);
+    return json({ error: message }, 500);
   }
 });

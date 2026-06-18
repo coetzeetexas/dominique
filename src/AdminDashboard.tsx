@@ -2168,7 +2168,7 @@ function DigitalMarketingTab({ apps, user }: { apps: Application[]; user: User }
             {filtered.length === 0 ? (
               <div className="p-8 text-center text-sm text-gray-400">No candidates match filters</div>
             ) : filtered.map(a => {
-              const sc = STATUS_CONFIG[a.status];
+              const sc = STATUS_CONFIG[a.status as AppStatus] ?? STATUS_CONFIG.pending;
               const isChecked = selected.has(a.id);
               return (
                 <button key={a.id} onClick={() => toggleOne(a.id)}

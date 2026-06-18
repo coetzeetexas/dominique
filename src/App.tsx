@@ -1135,7 +1135,7 @@ const ContactSection = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-navy-900">Email</h3>
-                  <p className="text-gray-600">korixllc@gmail.com</p>
+                  <p className="text-gray-600">admin@korixllc.com</p>
                 </div>
               </div>
 

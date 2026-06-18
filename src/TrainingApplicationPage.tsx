@@ -275,7 +275,7 @@ export function TrainingApplicationPage({ onBack }: Props) {
           <h2 className="text-xl font-bold text-gray-900 mb-2">Service Unavailable</h2>
           <p className="text-gray-500 text-sm mb-6">
             The training application form is temporarily unavailable. Please email us directly at{' '}
-            <a href="mailto:korixllc@gmail.com" className="text-navy-700 font-medium hover:underline">korixllc@gmail.com</a>{' '}
+            <a href="mailto:admin@korixllc.com" className="text-navy-700 font-medium hover:underline">admin@korixllc.com</a>{' '}
             to apply.
           </p>
           <button
@@ -428,7 +428,7 @@ export function TrainingApplicationPage({ onBack }: Props) {
         {/* Footer note */}
         <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4 text-xs text-gray-400">
           <div className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5" /> Your data is encrypted and stored securely</div>
-          <div className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" /> Questions? contact@korixllc.com</div>
+          <div className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" /> Questions? admin@korixllc.com</div>
           <div className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" /> KORIX LLC — Dallas, TX</div>
         </div>
       </div>
@@ -721,7 +721,7 @@ function Step4({
             </button>
           </div>
         )}
-        <p className="text-xs text-gray-400 mt-2">Optional but strongly recommended. You may also email your CV to contact@korixllc.com.</p>
+        <p className="text-xs text-gray-400 mt-2">Optional but strongly recommended. You may also email your CV to admin@korixllc.com.</p>
       </div>
     </div>
   );
@@ -769,7 +769,7 @@ function Step5({
         <div className="flex items-start gap-2">
           <Shield className="w-4 h-4 flex-shrink-0 mt-0.5" />
           <div>
-            <strong>Data Privacy Notice:</strong> Your information is collected solely for the purpose of evaluating your eligibility for KORIX LLC's workforce training program. We store your data securely and do not sell or share it with third parties without your consent. You may request deletion of your data at any time by emailing contact@korixllc.com. This complies with applicable CCPA regulations.
+            <strong>Data Privacy Notice:</strong> Your information is collected solely for the purpose of evaluating your eligibility for KORIX LLC's workforce training program. We store your data securely and do not sell or share it with third parties without your consent. You may request deletion of your data at any time by emailing admin@korixllc.com. This complies with applicable CCPA regulations.
           </div>
         </div>
       </div>

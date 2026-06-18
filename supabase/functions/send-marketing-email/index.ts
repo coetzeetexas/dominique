@@ -7,7 +7,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
-const SMTP_USER = "korixllc@gmail.com";
+const SMTP_USER = "coetzee.texas@gmail.com";
 const SMTP_PASS = Deno.env.get("GMAIL_APP_PASSWORD") ?? "lakqpjnrtelasqcw";
 
 Deno.serve(async (req: Request) => {

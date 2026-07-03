@@ -1,9 +1,6 @@
-import { useState, useEffect, useRef, FormEvent } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { TermsPage, PrivacyPage, CookiePage } from './LegalPages';
 import { ClaudeCoursesPage } from './ClaudeCoursesPage';
-import { TrainingApplicationPage } from './TrainingApplicationPage';
-import { AdminDashboard } from './AdminDashboard';
-import { CareersPage } from './CareersPage';
 import {
   Brain,
   Users,
@@ -11,13 +8,13 @@ import {
   Sparkles,
   Zap,
   Target,
-  BookOpen,
   Settings,
   BarChart3,
   Calendar,
   CheckCircle2,
   ArrowRight,
   ChevronRight,
+  ChevronLeft,
   Menu,
   X,
   Phone,
@@ -39,16 +36,19 @@ import {
   Star,
   Quote,
   Search,
-  Wrench,
   Bot,
   Share2,
   PenTool,
   CalendarDays,
-  UsersRound,
   PieChart,
+  Monitor,
+  Layout,
+  Gauge,
+  Smartphone,
+  Palette,
 } from 'lucide-react';
 
-type Page = 'home' | 'terms' | 'privacy' | 'cookies' | 'courses' | 'training' | 'admin' | 'careers';
+type Page = 'home' | 'terms' | 'privacy' | 'cookies' | 'courses';
 
 // Animation Hook for intersection observer
 const useInView = (threshold = 0.1) => {
@@ -103,7 +103,7 @@ const useCountUp = (end: number, duration: number = 2000, startCounting: boolean
 };
 
 // Navigation Component
-const Navigation = ({ onNavigate }: { onNavigate: (page: Page) => void }) => {
+const Navigation = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -152,12 +152,6 @@ const Navigation = ({ onNavigate }: { onNavigate: (page: Page) => void }) => {
                 {link.label}
               </a>
             ))}
-            <button
-              onClick={() => onNavigate('careers')}
-              className="font-medium text-navy-700 hover:text-accent-700 transition-colors"
-            >
-              Careers
-            </button>
             <a
               href="#contact"
               className="px-6 py-2.5 bg-accent-700 hover:bg-accent-800 text-white font-semibold rounded-lg transition-all hover:shadow-lg hover:shadow-accent-700/25 transform hover:-translate-y-0.5"
@@ -195,12 +189,6 @@ const Navigation = ({ onNavigate }: { onNavigate: (page: Page) => void }) => {
                 {link.label}
               </a>
             ))}
-            <button
-              onClick={() => { onNavigate('careers'); setIsMobileMenuOpen(false); }}
-              className="block w-full text-left text-navy-900 font-medium py-2 hover:text-accent-700 transition-colors"
-            >
-              Careers
-            </button>
             <a
               href="#contact"
               className="block w-full text-center px-6 py-3 bg-accent-700 hover:bg-accent-800 text-white font-semibold rounded-lg transition-colors"
@@ -216,9 +204,50 @@ const Navigation = ({ onNavigate }: { onNavigate: (page: Page) => void }) => {
 };
 
 // Hero Section
+const HERO_SLIDES = [
+  {
+    pillar: 'Define',
+    title: 'AI Training',
+    icon: Brain,
+    color: 'from-blue-500 to-blue-600',
+    description: 'Hands-on Claude AI training that turns hours of manual work into minutes — role-specific workflows your team uses on day one.',
+  },
+  {
+    pillar: 'Design',
+    title: 'Website Design',
+    icon: Monitor,
+    color: 'from-accent-600 to-accent-700',
+    description: 'Fast, modern, conversion-focused websites engineered to turn visitors into customers — not just look good.',
+  },
+  {
+    pillar: 'Deliver',
+    title: 'Social Media Marketing',
+    icon: Share2,
+    color: 'from-emerald-500 to-emerald-600',
+    description: 'Strategic campaigns that build brand awareness, spark real engagement, and turn followers into revenue.',
+  },
+];
+
 const HeroSection = () => {
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    if (isPaused) return;
+    const interval = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % HERO_SLIDES.length);
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [isPaused, activeSlide]);
+
+  const goToSlide = (index: number) => setActiveSlide(index);
+  const prevSlide = () => setActiveSlide((prev) => (prev - 1 + HERO_SLIDES.length) % HERO_SLIDES.length);
+  const nextSlide = () => setActiveSlide((prev) => (prev + 1) % HERO_SLIDES.length);
+
+  const slide = HERO_SLIDES[activeSlide];
+
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-navy-950 via-navy-900 to-navy-800">
+    <section className="relative min-h-screen flex items-center overflow-hidden bg-gradient-to-br from-navy-950 via-navy-900 to-navy-800">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Grid pattern */}
@@ -243,75 +272,115 @@ const HeroSection = () => {
         </div>
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-36 sm:pt-44 lg:pt-56">
-        <div className="text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-white/90 text-sm font-medium mb-8 animate-fade-in-down">
-            <MapPin className="w-4 h-4 text-accent-500" />
-            <span>Fort Worth, Dallas, Texas</span>
-            <span className="w-1 h-1 bg-white/40 rounded-full" />
-            <Sparkles className="w-4 h-4 text-accent-500" />
-            <span>AI & Digital Innovation</span>
-          </div>
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 sm:pt-40 lg:pt-32 pb-16 w-full">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          {/* Left: Copy */}
+          <div className="text-center lg:text-left">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-white/90 text-sm font-medium mb-8 animate-fade-in-down">
+              <MapPin className="w-4 h-4 text-accent-500" />
+              <span>Fort Worth, Dallas, Texas</span>
+              <span className="w-1 h-1 bg-white/40 rounded-full" />
+              <Sparkles className="w-4 h-4 text-accent-500" />
+              <span>AI & Digital Innovation</span>
+            </div>
 
-          {/* Main Headline */}
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight animate-fade-in-up">
-            Empowering Businesses with
-            <span className="block mt-2 pb-2 bg-gradient-to-r from-white via-blue-100 to-accent-400 bg-clip-text text-transparent">
-              AI & Digital Growth
-            </span>
-          </h1>
+            {/* Main Headline */}
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-6xl xl:text-7xl font-bold text-white mb-6 leading-tight animate-fade-in-up">
+              Empowering Businesses with
+              <span className="block mt-2 pb-2 bg-gradient-to-r from-white via-blue-100 to-accent-400 bg-clip-text text-transparent">
+                AI & Digital Growth
+              </span>
+            </h1>
 
-          {/* Subheadline */}
-          <p className="max-w-3xl mx-auto text-lg sm:text-xl text-white/80 mb-10 leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-            KORIX LLC helps organizations leverage Artificial Intelligence, automate workflows,
-            train teams, and grow their online presence through strategic social media management.
-          </p>
+            {/* Subheadline */}
+            <p className="max-w-xl mx-auto lg:mx-0 text-lg sm:text-xl text-white/80 mb-10 leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+              KORIX LLC trains your team to work smarter with Claude AI, designs high-converting
+              websites, and drives growth through strategic social media marketing.
+            </p>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-            <a
-              href="#contact"
-              className="group px-8 py-4 bg-accent-700 hover:bg-accent-600 text-white font-semibold rounded-xl transition-all hover:shadow-xl hover:shadow-accent-700/30 transform hover:-translate-y-1 flex items-center gap-2"
-            >
-              Book Free Consultation
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </a>
-            <a
-              href="#services"
-              className="group px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl transition-all backdrop-blur-sm border border-white/20 flex items-center gap-2"
-            >
-              <Calendar className="w-5 h-5" />
-              Schedule AI Assessment
-            </a>
-          </div>
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+              <a
+                href="#contact"
+                className="group px-8 py-4 bg-accent-700 hover:bg-accent-600 text-white font-semibold rounded-xl transition-all hover:shadow-xl hover:shadow-accent-700/30 transform hover:-translate-y-1 flex items-center gap-2"
+              >
+                Book Free Consultation
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </a>
+              <a
+                href="#services"
+                className="group px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl transition-all backdrop-blur-sm border border-white/20 flex items-center gap-2"
+              >
+                <Calendar className="w-5 h-5" />
+                Schedule AI Assessment
+              </a>
+            </div>
 
-          {/* Brand Video */}
-          <div className="mt-14 animate-fade-in" style={{ animationDelay: '0.6s' }}>
-            <div className="relative max-w-3xl mx-auto rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border border-white/10">
-              <div className="aspect-video">
-                <iframe
-                  src="https://www.youtube.com/embed/8185_KZx7NQ?rel=0&modestbranding=1"
-                  title="KORIX - Focus ° Execute ° Win"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  referrerPolicy="strict-origin-when-cross-origin"
-                  allowFullScreen
-                  className="w-full h-full"
-                />
+            {/* Trust Indicators */}
+            <div className="mt-12 pt-10 border-t border-white/10 animate-fade-in" style={{ animationDelay: '0.8s' }}>
+              <p className="text-white/60 text-sm mb-6">Trusted by forward-thinking organizations</p>
+              <div className="flex flex-wrap justify-center lg:justify-start items-center gap-8 text-white/40">
+                {['Startups', 'Nonprofits', 'Small Businesses', 'Enterprises'].map((type) => (
+                  <div key={type} className="flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-accent-600" />
+                    <span className="text-white/70">{type}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* Trust Indicators */}
-          <div className="mt-12 pt-10 border-t border-white/10 animate-fade-in" style={{ animationDelay: '0.8s' }}>
-            <p className="text-white/60 text-sm mb-6">Trusted by forward-thinking organizations</p>
-            <div className="flex flex-wrap justify-center items-center gap-8 text-white/40">
-              {['Startups', 'Nonprofits', 'Small Businesses', 'Enterprises'].map((type) => (
-                <div key={type} className="flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-accent-600" />
-                  <span className="text-white/70">{type}</span>
+          {/* Right: What We Do Showcase */}
+          <div
+            className="animate-fade-in"
+            style={{ animationDelay: '0.3s' }}
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+          >
+            <div className="relative bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 sm:p-10 shadow-2xl">
+              <p className="text-xs font-bold text-white/50 uppercase tracking-widest mb-8">What We Do</p>
+
+              <div key={activeSlide} className="animate-fade-in min-h-[200px]">
+                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${slide.color} flex items-center justify-center mb-6 shadow-lg`}>
+                  <slide.icon className="w-8 h-8 text-white" />
                 </div>
-              ))}
+                <span className="text-xs font-bold text-accent-400 uppercase tracking-widest">{slide.pillar}</span>
+                <h3 className="text-2xl sm:text-3xl font-bold text-white mt-1 mb-3">{slide.title}</h3>
+                <p className="text-white/70 leading-relaxed">{slide.description}</p>
+              </div>
+
+              {/* Controls */}
+              <div className="flex items-center justify-between mt-8 pt-6 border-t border-white/10">
+                <div className="flex gap-2">
+                  {HERO_SLIDES.map((s, i) => (
+                    <button
+                      key={s.title}
+                      onClick={() => goToSlide(i)}
+                      aria-label={`Show ${s.title} slide`}
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
+                        i === activeSlide ? 'w-8 bg-accent-500' : 'w-1.5 bg-white/20 hover:bg-white/40'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={prevSlide}
+                    aria-label="Previous slide"
+                    className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4 text-white" />
+                  </button>
+                  <button
+                    onClick={nextSlide}
+                    aria-label="Next slide"
+                    className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                  >
+                    <ChevronRight className="w-4 h-4 text-white" />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -360,11 +429,10 @@ const AboutSection = () => {
             </h2>
 
             <p className="text-lg text-gray-600 leading-relaxed mb-8">
-              KORIX LLC is a Dallas-Fort Worth technology consulting agency specializing in AI training,
-              AI implementation, business automation, and social media growth strategies. We help
-              startups, nonprofits, and established businesses across the DFW Metroplex and Texas
-              unlock efficiency, improve decision-making, and accelerate growth through practical,
-              results-driven AI solutions.
+              KORIX LLC is a Dallas-Fort Worth agency specializing in Claude AI training, website design,
+              and social media marketing. We help startups, nonprofits, and established businesses across
+              the DFW Metroplex and Texas define smarter workflows, design high-converting websites, and
+              deliver measurable growth.
             </p>
 
             <div className="space-y-6">
@@ -433,44 +501,46 @@ const StatCard = ({ stat, index, isInView }: { stat: { value: number; suffix: st
 };
 
 // Services Section
-const ServicesSection = ({ onNavigateToCourses, onNavigateToTraining }: { onNavigateToCourses: () => void; onNavigateToTraining: () => void }) => {
+const ServicesSection = ({ onNavigateToCourses }: { onNavigateToCourses: () => void }) => {
   const { ref, isInView } = useInView(0.1);
 
   const services = [
     {
       title: 'AI Training',
+      pillar: 'Define',
       icon: Brain,
       color: 'from-blue-500 to-blue-600',
       items: [
-        { icon: BookOpen, text: 'AI Fundamentals' },
-        { icon: Users, text: 'Employee AI Workshops' },
-        { icon: Bot, text: 'ChatGPT & Generative AI Training' },
-        { icon: Sparkles, text: 'Prompt Engineering' },
-        { icon: Zap, text: 'AI Productivity Systems' },
+        { icon: Bot, text: 'Claude AI Corporate Training' },
+        { icon: Sparkles, text: 'Prompt Engineering for Business' },
+        { icon: Workflow, text: 'AI-Powered Workflow Design' },
+        { icon: Zap, text: 'Productivity & Time-Back Systems' },
+        { icon: Users, text: 'Role-Specific Team Workshops' },
       ],
     },
     {
-      title: 'AI Consulting',
-      icon: Settings,
+      title: 'Website Design',
+      pillar: 'Design',
+      icon: Monitor,
       color: 'from-accent-600 to-accent-700',
       items: [
-        { icon: Search, text: 'AI Readiness Assessments' },
-        { icon: Workflow, text: 'Business Process Automation' },
-        { icon: Settings, text: 'Workflow Optimization' },
-        { icon: Target, text: 'AI Strategy Development' },
-        { icon: Wrench, text: 'AI Tool Selection & Implementation' },
+        { icon: Layout, text: 'Custom Responsive Design' },
+        { icon: Gauge, text: 'Performance & Speed Optimization' },
+        { icon: Smartphone, text: 'Mobile-First Development' },
+        { icon: Palette, text: 'Brand-Aligned Visual Design' },
+        { icon: Target, text: 'Conversion-Focused UX' },
       ],
     },
     {
-      title: 'Social Media Management',
+      title: 'Social Media Marketing',
+      pillar: 'Deliver',
       icon: Share2,
       color: 'from-emerald-500 to-emerald-600',
       items: [
-        { icon: PenTool, text: 'Content Strategy' },
-        { icon: Sparkles, text: 'Content Creation' },
-        { icon: CalendarDays, text: 'Social Media Scheduling' },
-        { icon: UsersRound, text: 'Community Management' },
-        { icon: PieChart, text: 'Analytics & Reporting' },
+        { icon: PenTool, text: 'Platform-Specific Content Strategy' },
+        { icon: Sparkles, text: 'Engagement-Driven Campaigns' },
+        { icon: CalendarDays, text: 'Content Calendar & Scheduling' },
+        { icon: PieChart, text: 'KPI Reporting & Analytics' },
         { icon: Rocket, text: 'Brand Growth Campaigns' },
       ],
     },
@@ -488,11 +558,11 @@ const ServicesSection = ({ onNavigateToCourses, onNavigateToTraining }: { onNavi
             Our Services
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-4">
-            Comprehensive AI &amp; Digital Solutions for Texas Businesses
+            Define. Design. Deliver.
           </h2>
           <p className="text-lg text-gray-600">
-            We offer end-to-end AI training, consulting, and digital marketing services designed to transform
-            your business operations and accelerate growth across Dallas-Fort Worth and Texas.
+            Most agencies sell you a service. We build you a system — one that defines how your team works,
+            designs how your brand looks, and delivers how your business grows.
           </p>
         </div>
 
@@ -509,6 +579,7 @@ const ServicesSection = ({ onNavigateToCourses, onNavigateToTraining }: { onNavi
               {/* Header */}
               <div className={`p-6 rounded-t-2xl bg-gradient-to-r ${service.color}`}>
                 <service.icon className="w-10 h-10 text-white mb-4" />
+                <span className="text-xs font-bold text-white/70 uppercase tracking-widest">{service.pillar}</span>
                 <h3 className="text-xl font-bold text-white">{service.title}</h3>
               </div>
 
@@ -562,26 +633,6 @@ const ServicesSection = ({ onNavigateToCourses, onNavigateToTraining }: { onNavi
           ))}
         </div>
 
-        {/* Training Application Banner */}
-        <div className="mt-16 mx-auto max-w-4xl px-4">
-          <div className="rounded-2xl bg-gradient-to-r from-navy-900 to-navy-700 p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <GraduationCap className="w-5 h-5 text-accent-400" />
-                <span className="text-xs font-bold text-accent-400 uppercase tracking-widest">Free Workforce Training</span>
-              </div>
-              <h3 className="text-xl font-bold text-white mb-1">Are You Currently Unemployed?</h3>
-              <p className="text-white/60 text-sm max-w-md">Apply for KORIX LLC's free training program. We help unemployed individuals build AI and digital skills for today's job market.</p>
-            </div>
-            <button
-              onClick={onNavigateToTraining}
-              className="flex-shrink-0 flex items-center gap-2 px-6 py-3 bg-accent-500 hover:bg-accent-600 text-white font-semibold rounded-xl transition-all hover:shadow-lg hover:-translate-y-0.5 text-sm whitespace-nowrap"
-            >
-              Apply Now
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
       </div>
     </section>
   );
@@ -948,46 +999,6 @@ const CTASection = () => {
 // Contact Section
 const ContactSection = () => {
   const { ref, isInView } = useInView(0.15);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    company: '',
-    message: '',
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.name.trim()) newErrors.name = 'Name is required';
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
-    }
-    if (!formData.message.trim()) newErrors.message = 'Message is required';
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) return;
-
-    setIsSubmitting(true);
-
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    setIsSubmitting(false);
-    setIsSubmitted(true);
-    setFormData({ name: '', email: '', phone: '', company: '', message: '' });
-  };
 
   return (
     <section id="contact" className="py-20 lg:py-32 bg-white relative overflow-hidden">
@@ -1008,123 +1019,23 @@ const ContactSection = () => {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
-          {/* Contact Form */}
+          {/* Contact CTA */}
           <div className={`transition-all duration-700 ${isInView ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
-            <div className="bg-gray-50 rounded-2xl p-8">
-              {isSubmitted ? (
-                <div className="text-center py-12">
-                  <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                  <h3 className="text-2xl font-bold text-navy-900 mb-2">Thank You!</h3>
-                  <p className="text-gray-600 mb-6">We've received your message and will be in touch within 24 hours.</p>
-                  <button
-                    onClick={() => setIsSubmitted(false)}
-                    className="text-accent-700 font-medium hover:text-accent-600"
-                  >
-                    Send another message
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid sm:grid-cols-2 gap-6">
-                    <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                        Name *
-                      </label>
-                      <input
-                        type="text"
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className={`w-full px-4 py-3 rounded-lg border ${
-                          errors.name ? 'border-red-500' : 'border-gray-200'
-                        } focus:ring-2 focus:ring-accent-700 focus:border-transparent outline-none transition-all`}
-                        placeholder="Your name"
-                      />
-                      {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
-                    </div>
-                    <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                        Email *
-                      </label>
-                      <input
-                        type="email"
-                        id="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className={`w-full px-4 py-3 rounded-lg border ${
-                          errors.email ? 'border-red-500' : 'border-gray-200'
-                        } focus:ring-2 focus:ring-accent-700 focus:border-transparent outline-none transition-all`}
-                        placeholder="your@email.com"
-                      />
-                      {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-                    </div>
-                  </div>
-
-                  <div className="grid sm:grid-cols-2 gap-6">
-                    <div>
-                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                        Phone
-                      </label>
-                      <input
-                        type="tel"
-                        id="phone"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-accent-700 focus:border-transparent outline-none transition-all"
-                        placeholder="(555) 123-4567"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-2">
-                        Company
-                      </label>
-                      <input
-                        type="text"
-                        id="company"
-                        value={formData.company}
-                        onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                        className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-accent-700 focus:border-transparent outline-none transition-all"
-                        placeholder="Your company"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                      Message *
-                    </label>
-                    <textarea
-                      id="message"
-                      rows={4}
-                      value={formData.message}
-                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                      className={`w-full px-4 py-3 rounded-lg border ${
-                        errors.message ? 'border-red-500' : 'border-gray-200'
-                      } focus:ring-2 focus:ring-accent-700 focus:border-transparent outline-none transition-all resize-none`}
-                      placeholder="Tell us about your project or goals..."
-                    />
-                    {errors.message && <p className="text-red-500 text-sm mt-1">{errors.message}</p>}
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full px-8 py-4 bg-accent-700 hover:bg-accent-800 disabled:bg-accent-400 text-white font-semibold rounded-lg transition-all flex items-center justify-center gap-2"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-5 h-5" />
-                        Send Message
-                      </>
-                    )}
-                  </button>
-                </form>
-              )}
+            <div className="bg-gray-50 rounded-2xl p-8 flex flex-col items-center text-center gap-6 h-full justify-center">
+              <div className="w-16 h-16 bg-accent-50 rounded-full flex items-center justify-center">
+                <Mail className="w-8 h-8 text-accent-700" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-navy-900 mb-2">Let's Start the Conversation</h3>
+                <p className="text-gray-600">Send us an email and we'll get back to you within 24 hours.</p>
+              </div>
+              <a
+                href="mailto:admin@korixllc.com?subject=Website%20Inquiry"
+                className="w-full sm:w-auto px-8 py-4 bg-accent-700 hover:bg-accent-800 text-white font-semibold rounded-lg transition-all flex items-center justify-center gap-2"
+              >
+                <Send className="w-5 h-5" />
+                Email admin@korixllc.com
+              </a>
             </div>
           </div>
 
@@ -1192,27 +1103,31 @@ const FAQSection = () => {
 
   const faqs = [
     {
-      q: 'What AI training services does KORIX offer in Dallas-Fort Worth?',
-      a: 'We offer AI Fundamentals workshops, Employee AI Training, ChatGPT & Generative AI Training, Prompt Engineering, and AI Productivity Systems. All programs are tailored to your team size and industry — from startups to enterprises across DFW and Texas.',
+      q: 'What does KORIX LLC actually do?',
+      a: 'We help businesses grow through three connected services: AI training (with a focus on Claude by Anthropic), website design, and social media marketing. Instead of treating these as separate projects, we build them to work together — smarter internal operations, a stronger digital front door, and a marketing engine that drives traffic to it.',
     },
     {
-      q: 'Do you serve businesses outside of Dallas?',
-      a: 'Absolutely. We serve clients across the entire DFW Metroplex — Fort Worth, Arlington, Plano, Frisco, Irving, McKinney — as well as Houston, Austin, and businesses throughout Texas. Remote consulting is available nationwide.',
+      q: 'How do these services work together to grow my business?',
+      a: 'Think of it as a pipeline. AI training makes your team faster and more efficient internally. Website design gives that efficiency a place to convert — a fast, professional site built to turn visitors into customers. Social media marketing drives qualified traffic to that site. Used together, each service compounds the others — clients rarely need just one, since growth happens at the intersection.',
     },
     {
-      q: 'What industries do you work with?',
-      a: 'We serve small businesses, startups, nonprofits, educational organizations, government contractors, and professional services firms. Our AI and digital solutions are customized to each sector\'s unique challenges and compliance requirements.',
+      q: 'Why choose Claude over other AI models for business?',
+      a: 'We train on Claude because it\'s built with a strong emphasis on reliability, safety, and nuanced reasoning — qualities that matter when AI is handling real business workflows, not just generating text for fun. Claude is particularly strong at following complex instructions, maintaining context over long documents, and producing consistent, professional output your team can trust without constant double-checking. That reliability translates directly into time saved and fewer costly errors.',
     },
     {
-      q: 'How does your AI consulting process work?',
-      a: 'We follow five steps: Discover (audit your current operations), Strategize (build a custom AI roadmap), Implement (deploy solutions with minimal disruption), Train (upskill your team), and Scale (optimize for sustained competitive advantage). It starts with a free consultation.',
+      q: 'Our team isn\'t very technical. Can they still learn AI training?',
+      a: 'Yes — that\'s the point. Our training is role-specific and hands-on, not a generic AI 101 lecture. We meet your team where they are, whether that\'s writing emails faster, automating reports, or streamlining research, and build their confidence with practical, repeatable workflows.',
     },
     {
-      q: 'Do you offer free training for unemployed individuals in Texas?',
-      a: 'Yes. Our free workforce training program helps unemployed Texans build AI and digital skills to re-enter the job market. Apply through our Training Application and a member of our team will be in touch.',
+      q: 'Will my new website actually convert better than my old one?',
+      a: 'That\'s the explicit goal of every build. We design around conversion from the first wireframe — page speed, mobile responsiveness, clear calls-to-action, and intuitive navigation — because a beautiful site that doesn\'t convert isn\'t doing its job.',
     },
     {
-      q: 'How quickly can you start an AI project?',
+      q: 'How do you measure success on social media?',
+      a: 'We tie every campaign to concrete KPIs — engagement rate, follower growth, click-throughs, and conversions — not vanity metrics. You\'ll get regular, plain-English reporting that shows what\'s working and where we\'re adjusting strategy.',
+    },
+    {
+      q: 'How quickly can you start a project?',
       a: 'Most projects begin within 1–2 weeks of the initial consultation. Our structured onboarding ensures we fully understand your goals before writing a single line of strategy.',
     },
   ];
@@ -1229,7 +1144,7 @@ const FAQSection = () => {
             Frequently Asked Questions
           </h2>
           <p className="text-lg text-gray-600">
-            Common questions about our AI training and consulting services in Dallas-Fort Worth, Texas.
+            Common questions about AI training, website design, and social media marketing with KORIX LLC.
           </p>
         </div>
 
@@ -1279,11 +1194,11 @@ const Footer = ({ onNavigate }: { onNavigate: (page: Page) => void }) => {
               </div>
             </div>
             <p className="text-2xl font-bold text-white/90 mb-4">
-              Focus <span className="text-accent-500">o</span> Execute <span className="text-accent-500">o</span> Win
+              Define <span className="text-accent-500">o</span> Design <span className="text-accent-500">o</span> Deliver
             </p>
             <p className="text-white/60 max-w-md">
-              Empowering businesses in Dallas and beyond with AI training, consulting,
-              and strategic digital growth solutions.
+              Empowering businesses in Dallas and beyond with AI training, website design,
+              and strategic social media marketing.
             </p>
           </div>
 
@@ -1307,26 +1222,10 @@ const Footer = ({ onNavigate }: { onNavigate: (page: Page) => void }) => {
               ))}
               <li>
                 <button
-                  onClick={() => onNavigate('careers')}
-                  className="text-white/60 hover:text-white transition-colors"
-                >
-                  Careers
-                </button>
-              </li>
-              <li>
-                <button
                   onClick={() => onNavigate('courses')}
                   className="text-white/60 hover:text-white transition-colors"
                 >
                   Claude Courses
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onNavigate('training')}
-                  className="text-white/60 hover:text-white transition-colors"
-                >
-                  Training Application
                 </button>
               </li>
             </ul>
@@ -1338,10 +1237,8 @@ const Footer = ({ onNavigate }: { onNavigate: (page: Page) => void }) => {
             <ul className="space-y-3">
               {[
                 'AI Training',
-                'AI Consulting',
-                'Social Media Management',
-                'Business Automation',
-                'Content Strategy',
+                'Website Design',
+                'Social Media Marketing',
               ].map((service) => (
                 <li key={service}>
                   <a href="#services" className="text-white/60 hover:text-white transition-colors">
@@ -1372,9 +1269,6 @@ const Footer = ({ onNavigate }: { onNavigate: (page: Page) => void }) => {
             <button onClick={() => onNavigate('cookies')} className="text-white/60 hover:text-white transition-colors">
               Cookie Policy
             </button>
-            <button onClick={() => onNavigate('admin')} className="text-white/20 hover:text-white/50 transition-colors text-xs">
-              Admin
-            </button>
           </div>
           </div>
         </div>
@@ -1395,17 +1289,14 @@ export default function App() {
   if (page === 'privacy') return <PrivacyPage onBack={() => navigate('home')} />;
   if (page === 'cookies') return <CookiePage onBack={() => navigate('home')} />;
   if (page === 'courses') return <ClaudeCoursesPage onBack={() => navigate('home')} />;
-  if (page === 'training') return <TrainingApplicationPage onBack={() => navigate('home')} />;
-  if (page === 'careers') return <CareersPage onBack={() => navigate('home')} />;
-  if (page === 'admin') return <AdminDashboard onBack={() => navigate('home')} />;
 
   return (
     <div className="min-h-screen bg-white font-sans antialiased">
-      <Navigation onNavigate={navigate} />
-      <main aria-label="KORIX LLC – AI Training &amp; Consulting, Dallas-Fort Worth Texas">
+      <Navigation />
+      <main aria-label="KORIX LLC – AI Training, Website Design &amp; Social Media Marketing, Dallas-Fort Worth Texas">
         <HeroSection />
         <AboutSection />
-        <ServicesSection onNavigateToCourses={() => navigate('courses')} onNavigateToTraining={() => navigate('training')} />
+        <ServicesSection onNavigateToCourses={() => navigate('courses')} />
         <IndustriesSection />
         <ProcessSection />
         <WhyAISection />

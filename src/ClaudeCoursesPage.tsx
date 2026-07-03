@@ -17,8 +17,6 @@ import {
   Star,
 } from 'lucide-react';
 
-type Page = 'home' | 'terms' | 'privacy' | 'cookies' | 'courses';
-
 interface Course {
   title: string;
   description: string;

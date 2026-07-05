@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { TermsPage, PrivacyPage, CookiePage } from './LegalPages';
 import { ClaudeCoursesPage } from './ClaudeCoursesPage';
+import { PortfolioPage } from './PortfolioPage';
 import {
   Brain,
   Users,
@@ -22,7 +23,6 @@ import {
   MapPin,
 
   Workflow,
-  Lightbulb,
   Rocket,
   GraduationCap,
   TrendingUp,
@@ -33,7 +33,6 @@ import {
   Building2,
   Globe,
   Send,
-  Star,
   Quote,
   Search,
   Bot,
@@ -48,7 +47,7 @@ import {
   Palette,
 } from 'lucide-react';
 
-type Page = 'home' | 'terms' | 'privacy' | 'cookies' | 'courses';
+type Page = 'home' | 'terms' | 'privacy' | 'cookies' | 'courses' | 'portfolio';
 
 // Animation Hook for intersection observer
 const useInView = (threshold = 0.1) => {
@@ -103,7 +102,7 @@ const useCountUp = (end: number, duration: number = 2000, startCounting: boolean
 };
 
 // Navigation Component
-const Navigation = () => {
+const Navigation = ({ onNavigate }: { onNavigate: (page: Page) => void }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -116,7 +115,6 @@ const Navigation = () => {
   }, []);
 
   const navLinks = [
-    { href: '#about', label: 'About' },
     { href: '#services', label: 'Services' },
     { href: '#process', label: 'Process' },
     { href: '#faq', label: 'FAQ' },
@@ -152,6 +150,12 @@ const Navigation = () => {
                 {link.label}
               </a>
             ))}
+            <button
+              onClick={() => onNavigate('portfolio')}
+              className="font-medium text-navy-700 hover:text-accent-700 transition-colors"
+            >
+              Portfolio
+            </button>
             <a
               href="#contact"
               className="px-6 py-2.5 bg-accent-700 hover:bg-accent-800 text-white font-semibold rounded-lg transition-all hover:shadow-lg hover:shadow-accent-700/25 transform hover:-translate-y-0.5"
@@ -189,6 +193,12 @@ const Navigation = () => {
                 {link.label}
               </a>
             ))}
+            <button
+              onClick={() => { onNavigate('portfolio'); setIsMobileMenuOpen(false); }}
+              className="block w-full text-left text-navy-900 font-medium py-2 hover:text-accent-700 transition-colors"
+            >
+              Portfolio
+            </button>
             <a
               href="#contact"
               className="block w-full text-center px-6 py-3 bg-accent-700 hover:bg-accent-800 text-white font-semibold rounded-lg transition-colors"
@@ -272,7 +282,7 @@ const HeroSection = () => {
         </div>
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 sm:pt-40 lg:pt-32 pb-16 w-full">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10 lg:pt-12 pb-16 w-full">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Left: Copy */}
           <div className="text-center lg:text-left">
@@ -299,21 +309,14 @@ const HeroSection = () => {
               websites, and drives growth through strategic social media marketing.
             </p>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+            {/* CTA Button */}
+            <div className="flex justify-center lg:justify-start animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
               <a
                 href="#contact"
                 className="group px-8 py-4 bg-accent-700 hover:bg-accent-600 text-white font-semibold rounded-xl transition-all hover:shadow-xl hover:shadow-accent-700/30 transform hover:-translate-y-1 flex items-center gap-2"
               >
                 Book Free Consultation
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </a>
-              <a
-                href="#services"
-                className="group px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl transition-all backdrop-blur-sm border border-white/20 flex items-center gap-2"
-              >
-                <Calendar className="w-5 h-5" />
-                Schedule AI Assessment
               </a>
             </div>
 
@@ -388,115 +391,13 @@ const HeroSection = () => {
 
       {/* Scroll Indicator */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce-subtle">
-        <a href="#about" aria-label="Scroll to about section">
+        <a href="#services" aria-label="Scroll to services section">
           <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center pt-2">
             <div className="w-1.5 h-3 bg-white/60 rounded-full" />
           </div>
         </a>
       </div>
     </section>
-  );
-};
-
-// About Section
-const AboutSection = () => {
-  const { ref, isInView } = useInView(0.2);
-
-  const stats = [
-    { value: 50, suffix: '+', label: 'Clients Served' },
-    { value: 100, suffix: '+', label: 'AI Training Sessions' },
-    { value: 95, suffix: '%', label: 'Client Satisfaction' },
-    { value: 3, suffix: '+', label: 'Years Experience' },
-  ];
-
-  return (
-    <section id="about" className="py-20 lg:py-32 bg-white relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-primary-50 to-transparent rounded-full blur-3xl opacity-50" />
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-accent-50 to-transparent rounded-full blur-3xl opacity-50" />
-
-      <div ref={ref} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          {/* Content */}
-          <div className={`transition-all duration-700 ${isInView ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-navy-50 rounded-full text-navy-700 text-sm font-medium mb-6">
-              <Building2 className="w-4 h-4" />
-              About Us
-            </div>
-
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-navy-900 mb-6">
-              About KORIX LLC
-            </h2>
-
-            <p className="text-lg text-gray-600 leading-relaxed mb-8">
-              KORIX LLC is a Dallas-Fort Worth agency specializing in Claude AI training, website design,
-              and social media marketing. We help startups, nonprofits, and established businesses across
-              the DFW Metroplex and Texas define smarter workflows, design high-converting websites, and
-              deliver measurable growth.
-            </p>
-
-            <div className="space-y-6">
-              <div className="p-6 bg-gradient-to-br from-navy-50 to-white rounded-xl border border-navy-100">
-                <h3 className="font-semibold text-navy-900 flex items-center gap-2 mb-2">
-                  <Target className="w-5 h-5 text-accent-700" />
-                  Our Mission
-                </h3>
-                <p className="text-gray-600">
-                  To democratize AI and digital innovation for businesses of all sizes,
-                  making advanced technology accessible, practical, and results-driven.
-                </p>
-              </div>
-
-              <div className="p-6 bg-gradient-to-br from-accent-50 to-white rounded-xl border border-accent-100">
-                <h3 className="font-semibold text-navy-900 flex items-center gap-2 mb-2">
-                  <Lightbulb className="w-5 h-5 text-accent-700" />
-                  Our Vision
-                </h3>
-                <p className="text-gray-600">
-                  A future where every organization harnesses AI strategically to create
-                  meaningful impact, sustainable growth, and lasting competitive advantage.
-                </p>
-              </div>
-
-              <div className="p-6 bg-gradient-to-br from-primary-50 to-white rounded-xl border border-primary-100">
-                <h3 className="font-semibold text-navy-900 flex items-center gap-2 mb-2">
-                  <Star className="w-5 h-5 text-accent-700" />
-                  Why Choose Us
-                </h3>
-                <p className="text-gray-600">
-                  We combine deep AI expertise with real-world business acumen, delivering
-                  solutions that are practical, scalable, and aligned with your goals.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Stats Grid */}
-          <div className={`grid grid-cols-2 gap-6 transition-all duration-700 delay-200 ${isInView ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}`}>
-            {stats.map((stat, index) => (
-              <StatCard key={stat.label} stat={stat} index={index} isInView={isInView} />
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-// Stat Card Component
-const StatCard = ({ stat, index, isInView }: { stat: { value: number; suffix: string; label: string }; index: number; isInView: boolean }) => {
-  const count = useCountUp(stat.value, 2000 + index * 200, isInView);
-
-  return (
-    <div className="relative p-8 bg-gradient-to-br from-navy-900 to-navy-800 rounded-2xl overflow-hidden group hover:scale-105 transition-transform duration-300">
-      <div className="absolute top-0 right-0 w-24 h-24 bg-accent-700/10 rounded-full blur-2xl group-hover:bg-accent-700/20 transition-colors" />
-      <div className="relative z-10">
-        <div className="text-5xl font-bold text-white mb-2">
-          {count}{stat.suffix}
-        </div>
-        <div className="text-white/70 font-medium">{stat.label}</div>
-      </div>
-    </div>
   );
 };
 
@@ -956,43 +857,268 @@ const TestimonialsSection = () => {
 const CTASection = () => {
   const { ref, isInView } = useInView(0.3);
 
+  const benefits = [
+    'Free 30-minute strategy call',
+    'No obligation, no pressure',
+    'Response within 24 hours',
+  ];
+
   return (
     <section className="py-20 lg:py-32 bg-gradient-to-br from-accent-700 via-accent-800 to-accent-900 relative overflow-hidden">
       {/* Background elements */}
-      <div className="absolute inset-0">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-white/5 rounded-full blur-3xl" />
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                            linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+          backgroundSize: '50px 50px'
+        }} />
       </div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-white/5 rounded-full blur-3xl" />
+      <div className="absolute top-0 right-0 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-float" />
+      <div className="absolute bottom-0 left-0 w-64 h-64 bg-navy-900/20 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} />
 
-      <div ref={ref} className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
+      <div ref={ref} className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
         <div className={`transition-all duration-700 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-white/90 text-sm font-medium mb-6 border border-white/20">
+            <Sparkles className="w-4 h-4" />
+            Free Consultation
+          </div>
+
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6">
             Ready to Transform Your Business?
           </h2>
-          <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto">
-            Let's discuss how AI and strategic digital marketing can help your
-            organization achieve measurable growth.
+          <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
+            Let's discuss how AI training, website design, and social media marketing
+            can help your organization achieve measurable growth.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex justify-center mb-8">
             <a
               href="#contact"
               className="group px-8 py-4 bg-white hover:bg-gray-100 text-accent-800 font-semibold rounded-xl transition-all hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center gap-2"
             >
               <Calendar className="w-5 h-5" />
-              Book Consultation
+              Book Free Consultation
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </a>
-            <a
-              href="#contact"
-              className="px-8 py-4 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl transition-all backdrop-blur-sm border border-white/30 flex items-center justify-center gap-2"
-            >
-              <Mail className="w-5 h-5" />
-              Contact Us
-            </a>
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
+            {benefits.map((benefit) => (
+              <div key={benefit} className="flex items-center gap-2 text-white/80 text-sm">
+                <CheckCircle2 className="w-4 h-4 text-white flex-shrink-0" />
+                {benefit}
+              </div>
+            ))}
           </div>
         </div>
       </div>
     </section>
+  );
+};
+
+// Contact Form
+const SERVICE_OPTIONS = ['AI Training', 'Website Design', 'Social Media Marketing', 'Not sure yet'];
+
+interface ContactFormData {
+  name: string;
+  email: string;
+  phone: string;
+  company: string;
+  service: string;
+  website: string;
+  message: string;
+}
+
+const ContactForm = () => {
+  const [formData, setFormData] = useState<ContactFormData>({
+    name: '', email: '', phone: '', company: '', service: '', website: '', message: '',
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const setField = (key: keyof ContactFormData, value: string) =>
+    setFormData((prev) => ({ ...prev, [key]: value }));
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email';
+    }
+    if (!formData.service) newErrors.service = 'Please select a service';
+    if (!formData.message.trim()) newErrors.message = 'Please tell us about your project';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+
+    const subject = `New Inquiry - ${formData.name}${formData.company ? ` (${formData.company})` : ''}`;
+    const body = [
+      `Name: ${formData.name}`,
+      `Email: ${formData.email}`,
+      `Phone: ${formData.phone || 'N/A'}`,
+      `Company: ${formData.company || 'N/A'}`,
+      `Service Interested In: ${formData.service}`,
+      `Current Website: ${formData.website || 'N/A'}`,
+      '',
+      'Project Details:',
+      formData.message,
+    ].join('\n');
+
+    window.location.href = `mailto:korixllc@outlook.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    setIsSubmitted(true);
+  };
+
+  const resetForm = () => {
+    setFormData({ name: '', email: '', phone: '', company: '', service: '', website: '', message: '' });
+    setErrors({});
+    setIsSubmitted(false);
+  };
+
+  const inputClass = (field: string) =>
+    `w-full px-4 py-3 rounded-lg border ${
+      errors[field] ? 'border-red-500' : 'border-gray-200'
+    } focus:ring-2 focus:ring-accent-700 focus:border-transparent outline-none transition-all`;
+
+  return (
+    <div className="bg-gray-50 rounded-2xl p-8">
+      {isSubmitted ? (
+        <div className="text-center py-12">
+          <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
+          <h3 className="text-2xl font-bold text-navy-900 mb-2">Thank You!</h3>
+          <p className="text-gray-600 mb-6">
+            Your email client should now be open with your message pre-filled — just hit send
+            and we'll be in touch within 24 hours.
+          </p>
+          <button onClick={resetForm} className="text-accent-700 font-medium hover:text-accent-600">
+            Send another message
+          </button>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid sm:grid-cols-2 gap-6">
+            <div>
+              <label htmlFor="cf-name" className="block text-sm font-medium text-gray-700 mb-2">
+                Full Name *
+              </label>
+              <input
+                type="text"
+                id="cf-name"
+                value={formData.name}
+                onChange={(e) => setField('name', e.target.value)}
+                className={inputClass('name')}
+                placeholder="Your name"
+              />
+              {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+            </div>
+            <div>
+              <label htmlFor="cf-email" className="block text-sm font-medium text-gray-700 mb-2">
+                Email *
+              </label>
+              <input
+                type="email"
+                id="cf-email"
+                value={formData.email}
+                onChange={(e) => setField('email', e.target.value)}
+                className={inputClass('email')}
+                placeholder="your@email.com"
+              />
+              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-6">
+            <div>
+              <label htmlFor="cf-phone" className="block text-sm font-medium text-gray-700 mb-2">
+                Phone
+              </label>
+              <input
+                type="tel"
+                id="cf-phone"
+                value={formData.phone}
+                onChange={(e) => setField('phone', e.target.value)}
+                className={inputClass('phone')}
+                placeholder="(555) 123-4567"
+              />
+            </div>
+            <div>
+              <label htmlFor="cf-company" className="block text-sm font-medium text-gray-700 mb-2">
+                Company
+              </label>
+              <input
+                type="text"
+                id="cf-company"
+                value={formData.company}
+                onChange={(e) => setField('company', e.target.value)}
+                className={inputClass('company')}
+                placeholder="Your company"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="cf-service" className="block text-sm font-medium text-gray-700 mb-2">
+              Which service are you interested in? *
+            </label>
+            <select
+              id="cf-service"
+              value={formData.service}
+              onChange={(e) => setField('service', e.target.value)}
+              className={inputClass('service')}
+            >
+              <option value="">Select a service…</option>
+              {SERVICE_OPTIONS.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+            {errors.service && <p className="text-red-500 text-sm mt-1">{errors.service}</p>}
+          </div>
+
+          <div>
+            <label htmlFor="cf-website" className="block text-sm font-medium text-gray-700 mb-2">
+              Current Website URL (if any)
+            </label>
+            <input
+              type="text"
+              id="cf-website"
+              value={formData.website}
+              onChange={(e) => setField('website', e.target.value)}
+              className={inputClass('website')}
+              placeholder="e.g. www.example.com"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="cf-message" className="block text-sm font-medium text-gray-700 mb-2">
+              Tell us about your project & goals *
+            </label>
+            <textarea
+              id="cf-message"
+              rows={4}
+              value={formData.message}
+              onChange={(e) => setField('message', e.target.value)}
+              className={`${inputClass('message')} resize-none`}
+              placeholder="What are you trying to achieve, and what should visitors do when they land on your site?"
+            />
+            {errors.message && <p className="text-red-500 text-sm mt-1">{errors.message}</p>}
+          </div>
+
+          <button
+            type="submit"
+            className="w-full px-8 py-4 bg-accent-700 hover:bg-accent-800 text-white font-semibold rounded-lg transition-all flex items-center justify-center gap-2"
+          >
+            <Send className="w-5 h-5" />
+            Send Message
+          </button>
+        </form>
+      )}
+    </div>
   );
 };
 
@@ -1019,27 +1145,12 @@ const ContactSection = () => {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
-          {/* Contact CTA */}
+          {/* Contact Form */}
           <div className={`transition-all duration-700 ${isInView ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
-            <div className="bg-gray-50 rounded-2xl p-8 flex flex-col items-center text-center gap-6 h-full justify-center">
-              <div className="w-16 h-16 bg-accent-50 rounded-full flex items-center justify-center">
-                <Mail className="w-8 h-8 text-accent-700" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-navy-900 mb-2">Let's Start the Conversation</h3>
-                <p className="text-gray-600">Send us an email and we'll get back to you within 24 hours.</p>
-              </div>
-              <a
-                href="mailto:admin@korixllc.com?subject=Website%20Inquiry"
-                className="w-full sm:w-auto px-8 py-4 bg-accent-700 hover:bg-accent-800 text-white font-semibold rounded-lg transition-all flex items-center justify-center gap-2"
-              >
-                <Send className="w-5 h-5" />
-                Email admin@korixllc.com
-              </a>
-            </div>
+            <ContactForm />
           </div>
 
-          {/* Contact Info & Map */}
+          {/* Contact Info */}
           <div className={`space-y-8 transition-all duration-700 delay-200 ${isInView ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}`}>
             {/* Contact Info */}
             <div className="space-y-6">
@@ -1059,7 +1170,7 @@ const ContactSection = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-navy-900">Email</h3>
-                  <p className="text-gray-600">admin@korixllc.com</p>
+                  <p className="text-gray-600">korixllc@outlook.com</p>
                 </div>
               </div>
 
@@ -1072,20 +1183,6 @@ const ContactSection = () => {
                   <p className="text-gray-600">Monday - Friday: 9:00 AM - 5:00 PM CST</p>
                 </div>
               </div>
-            </div>
-
-            {/* Map */}
-            <div className="rounded-2xl overflow-hidden shadow-lg h-64 lg:h-80">
-              <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d214556.64200855075!2d-96.86827964179689!3d32.8205874!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x864e993d0ed5e9f1%3A0xb4c8a7e4e3e3e3e3!2sDallas%2C%20TX!5e0!3m2!1sen!2sus!4v1700000000000!5m2!1sen!2sus"
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title="KORIX LLC Location - Fort Worth, Dallas, Texas"
-              />
             </div>
 
             {/* Social Links */}
@@ -1207,7 +1304,6 @@ const Footer = ({ onNavigate }: { onNavigate: (page: Page) => void }) => {
             <h3 className="font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-3">
               {[
-                { href: '#about', label: 'About Us' },
                 { href: '#services', label: 'Services' },
                 { href: '#process', label: 'Our Process' },
                 { href: '#testimonials', label: 'Testimonials' },
@@ -1220,6 +1316,14 @@ const Footer = ({ onNavigate }: { onNavigate: (page: Page) => void }) => {
                   </a>
                 </li>
               ))}
+              <li>
+                <button
+                  onClick={() => onNavigate('portfolio')}
+                  className="text-white/60 hover:text-white transition-colors"
+                >
+                  Portfolio
+                </button>
+              </li>
               <li>
                 <button
                   onClick={() => onNavigate('courses')}
@@ -1289,13 +1393,14 @@ export default function App() {
   if (page === 'privacy') return <PrivacyPage onBack={() => navigate('home')} />;
   if (page === 'cookies') return <CookiePage onBack={() => navigate('home')} />;
   if (page === 'courses') return <ClaudeCoursesPage onBack={() => navigate('home')} />;
+  if (page === 'portfolio') return <PortfolioPage onBack={() => navigate('home')} />;
 
   return (
     <div className="min-h-screen bg-white font-sans antialiased">
-      <Navigation />
+      <Navigation onNavigate={navigate} />
+      <div className="h-44 sm:h-52 lg:h-64" aria-hidden="true" />
       <main aria-label="KORIX LLC – AI Training, Website Design &amp; Social Media Marketing, Dallas-Fort Worth Texas">
         <HeroSection />
-        <AboutSection />
         <ServicesSection onNavigateToCourses={() => navigate('courses')} />
         <IndustriesSection />
         <ProcessSection />
